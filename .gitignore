@@ -7,6 +7,9 @@ __pycache__/
 # Env
 .env
 
+# Environment variables
+.env
+
 # Virtual env
 venv/
 .venv/
@@ -31,4 +34,4 @@ dist/
 build/
 
 # Alembic
-alembic/versions/*.pyc
+alembic/__pycache__/
