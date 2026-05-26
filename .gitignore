@@ -4,9 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Env
-.env
-
 # Environment variables
 .env
 
