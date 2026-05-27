@@ -1,0 +1,42 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.models.user import User
+
+from app.schemas.auth import UserRegister, UserLogin, Token
+
+from app.services.auth_service import create_user
+
+from app.core.security import (
+    verify_password,
+    create_access_token,
+)
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/register")
+def register(user_data: UserRegister, db: Session = Depends(get_db)):
+    user = create_user(db, user_data)
+
+    return {"message": "user created"}
+
+
+@router.post("/login", response_model=Token)
+def login(user_data: UserLogin, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.email == user_data.email).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": user.email})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+    }
