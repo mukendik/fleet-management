@@ -29,19 +29,18 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
 
-        user = authenticate_user(
-             db,
-             user_data.email,
-             user_data.password
-        )
+    user = authenticate_user(
+        db,
+        user_data.email,
+        user_data.password
+    )
 
-        if not user:
-           raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        
-       token = create_access_token({"sub": user.email})
+    token = create_access_token({"sub": user.email})
 
-       return {
-           "access_token": token,
-           "token_type": "bearer",
-       }
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+    }
