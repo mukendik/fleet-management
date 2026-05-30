@@ -6,13 +6,16 @@ from app.models.user import User
 
 from app.api.deps import get_current_user
 
-from app.schemas.auth import UserRegister, UserLogin, Token
-from app.schemas.user import UserLogin
+#from app.schemas.auth import UserRegister, UserLogin, Token
+from app.schemas.user import UserCreate, UserLogin
+from app.schemas.auth import Token
+#from app.schemas.user import UserLogin
 
 from app.services.auth_service import create_user
 from app.services.auth_service import authenticate_user
 
 from app.core.security import create_access_token
+from app.core.security import hash_password
 
 from app.core.security import (
     verify_password,
@@ -21,13 +24,29 @@ from app.core.security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-
+# REGISTER
 @router.post("/register")
-def register(user_data: UserRegister, db: Session = Depends(get_db)):
-    user = create_user(db, user_data)
+def register(user: UserCreate, db: Session = Depends(get_db)):
 
-    return {"message": "user created"}
+    existing = db.query(User).filter(User.email == user.email).first()
 
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    new_user = User(
+        email=user.email,
+        hashed_password=hash_password(user.password),
+        company_id=user.company_id
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
+
+
+# LOGIN
 @router.post("/login", response_model=Token)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
 
@@ -47,6 +66,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
     }
 
+# ME (SaaS READY)
 @router.get("/me")
 def read_me(current_user: User = Depends(get_current_user)):
     return current_user
