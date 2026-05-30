@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.api.routes import vehicles
 from app.api.routes.auth import router as auth_router
 
 from app.core.database import Base, engine
@@ -17,4 +18,5 @@ def root():
         "message": "Fleet Manager API running"
     }
 app.include_router(auth_router)
+app.include_router(vehicles.router)
 
