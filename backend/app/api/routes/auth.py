@@ -14,7 +14,11 @@ from app.schemas.auth import Token
 from app.services.auth_service import create_user
 from app.services.auth_service import authenticate_user
 
-from app.core.security import create_access_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token
+)
+
 from app.core.security import hash_password
 
 from app.core.security import (
