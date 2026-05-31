@@ -1,6 +1,6 @@
 
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
 
@@ -48,3 +48,19 @@ def create_refresh_token(data: dict):
         SECRET_KEY,
         algorithm=ALGORITHM
     )
+
+def verify_refresh_token(token: str):
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        if payload.get("type") != "refresh":
+            return None
+
+        return payload
+
+    except JWTError:
+        return None
