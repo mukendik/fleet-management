@@ -59,12 +59,19 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": user.email})
+    access_token = create_access_token({
+    "sub": user.email
+})
+
+    refresh_token = create_refresh_token({
+    "sub": user.email
+})
 
     return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
+    "access_token": access_token,
+    "refresh_token": refresh_token,
+    "token_type": "bearer",
+}
 
 # ME (SaaS READY)
 @router.get("/me")
