@@ -9,3 +9,5 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
 
     company_id = Column(Integer, ForeignKey("companies.id"))
+
+    role = Column(String, default="driver")
