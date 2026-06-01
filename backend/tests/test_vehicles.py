@@ -6,18 +6,15 @@ client = TestClient(app)
 
 
 def get_token():
-    client.post("/auth/register", json={
-        "email": "test@gmail.com",
-        "password": "123456",
-        "company_id": 1
-    })
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "test@gmail.com",
+            "password": "123456"
+        }
+    )
 
-    login = client.post("/auth/login", json={
-        "email": "test@gmail.com",
-        "password": "123456"
-    })
-
-    return login.json()["access_token"]
+    return response.json()["access_token"]
 
 def test_create_vehicle():
     token = get_token()

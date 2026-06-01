@@ -27,6 +27,12 @@ def get_current_user(
             algorithms=[settings.ALGORITHM]
         )
 
+        # IMPORTANT
+        token_type = payload.get("type")
+
+        if token_type != "access":
+            raise credentials_exception
+
         email: str = payload.get("sub")
 
         if email is None:
@@ -35,7 +41,9 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(
+        User.email == email
+    ).first()
 
     if user is None:
         raise credentials_exception
