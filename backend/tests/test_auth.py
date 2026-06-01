@@ -14,7 +14,8 @@ def test_refresh_token(client):
         "email": "test@gmail.com",
         "password": "123456"
     })
-
+    print(login.status_code)
+    print(login.json())
     assert login.status_code == 200
 
     data = login.json()
