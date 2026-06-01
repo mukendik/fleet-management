@@ -2,14 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 from app.db.base import Base
-from app.db.session import engine
 
-
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def db_session():
     connection = engine.connect()
     transaction = connection.begin()
-
     session = Session(bind=connection)
 
     yield session
