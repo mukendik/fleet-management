@@ -10,6 +10,7 @@ def create_user(db: Session, user_data: UserRegister):
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
         company_id=user_data.company_id,
+        role="driver"  # default safe role
     )
 
     db.add(user)
