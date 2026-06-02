@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from app.models.base import Base
 from app.core.roles import Role
+import enum
 
 class User(Base):
     __tablename__ = "users"
@@ -12,3 +13,8 @@ class User(Base):
     company_id = Column(Integer, ForeignKey("companies.id"))
 
     role = Column(String, default=Role.DRIVER.value)
+
+    class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    USER = "user"
