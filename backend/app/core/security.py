@@ -2,12 +2,15 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from app.core.config import settings
+from app.core.config import Settings, settings
+from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.user import User
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException
 
 
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -77,7 +80,7 @@ def get_current_user(
     db: Session = Depends(get_db)
 ):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, Settings.SECRET_KEY, algorithms=[Settings.ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")

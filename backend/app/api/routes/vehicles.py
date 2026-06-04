@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
+from app.core.roles import Role
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate
 
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 @router.get("")
 def get_vehicles(
     db: Session = Depends(get_db),
+    user=Depends(require_roles(Role.ADMIN, Role.DRIVER)),
     current_user: User = Depends(get_current_user)
 ):
     return db.query(Vehicle).filter(
@@ -26,6 +28,7 @@ def get_vehicles(
 def create_vehicle(
     data: VehicleCreate,
     db: Session = Depends(get_db),
+    user=Depends(require_roles(Role.ADMIN)),
     current_user: User = Depends(get_current_user)
 ):
     vehicle = Vehicle(
@@ -46,6 +49,7 @@ def update_vehicle(
     vehicle_id: int,
     data: VehicleUpdate,
     db: Session = Depends(get_db),
+    user=Depends(require_roles(Role.ADMIN)),
     current_user: User = Depends(get_current_user)
 ):
     vehicle = db.query(Vehicle).filter(
@@ -72,7 +76,8 @@ def update_vehicle(
 def delete_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    user=Depends(require_roles(Role.ADMIN))
+  #  current_user: User = Depends(get_current_user)
 ):
     vehicle = db.query(Vehicle).filter(
         Vehicle.id == vehicle_id,

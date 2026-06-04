@@ -1,13 +1,13 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from app.core.security import oauth2_scheme
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-
+from app.core.database import SessionLocal
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.user import User
+from app.models.user import User, Role
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
 
 
 def get_current_user(
@@ -49,3 +49,13 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+def require_roles(*allowed_roles: Role):
+    def wrapper(user=Depends(get_current_user)):
+        if user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail="Not enough permissions"
+            )
+        return user
+    return wrapper
