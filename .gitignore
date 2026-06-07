@@ -32,3 +32,6 @@ build/
 
 # Alembic
 alembic/__pycache__/
+
+#script
+.start.sh

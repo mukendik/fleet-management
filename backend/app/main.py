@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api.routes import vehicles
+from app.models import user
 from app.api.routes.auth import router as auth_router
 
 from app.core.database import Base, engine
@@ -10,7 +11,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-Base.metadata.create_all(bind=engine)
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")

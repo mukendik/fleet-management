@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from app.core.config import Settings, settings
+from app.core.config import settings
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.user import User
@@ -24,10 +24,8 @@ def get_db():
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
-
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -38,7 +36,6 @@ def create_access_token(data: dict):
     settings.SECRET_KEY,
     algorithm=settings.ALGORITHM
 )
-
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
@@ -58,7 +55,6 @@ def create_refresh_token(data: dict):
         algorithm=settings.ALGORITHM
     )
 
-
 def verify_refresh_token(token: str):
     try:
         payload = jwt.decode(
@@ -75,21 +71,3 @@ def verify_refresh_token(token: str):
     except JWTError:
         return None
     
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
-    try:
-        payload = jwt.decode(token, Settings.SECRET_KEY, algorithms=[Settings.ALGORITHM])
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    return user
