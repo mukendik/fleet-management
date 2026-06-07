@@ -15,7 +15,7 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 @router.get("")
 def get_vehicles(
     db: Session = Depends(get_db),
-    user=Depends(require_roles(Role.DRIVER)),
+    user=Depends(require_roles(["admin", "manager"])),
     current_user: User = Depends(get_current_user)
 ):
     return db.query(Vehicle).filter(
@@ -28,7 +28,7 @@ def get_vehicles(
 def create_vehicle(
     data: VehicleCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_roles(["driver","admin", "manager"])),
+    user=Depends(require_roles(["admin", "manager"])),
     current_user: User = Depends(get_current_user)
 ):
     vehicle = Vehicle(
@@ -41,10 +41,6 @@ def create_vehicle(
     db.commit()
     db.refresh(vehicle)
 
-    #print("current_user ="+ current_user)
-    #print("current_user role = "+current_user.role)
-    #print("current_user company = "+current_user.company_id)
-
     return vehicle
 
 # UPDATE VEHICLE
@@ -53,7 +49,7 @@ def update_vehicle(
     vehicle_id: int,
     data: VehicleUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_roles(["driver", "admin", "manager"])),
+    user=Depends(require_roles(["admin", "manager"])),
     current_user: User = Depends(get_current_user)
 ):
     vehicle = db.query(Vehicle).filter(
@@ -80,7 +76,7 @@ def update_vehicle(
 def delete_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_roles(["driver", "admin", "manager"])),
+    user=Depends(require_roles(["admin", "manager"])),
     current_user: User = Depends(get_current_user)
 ):
     vehicle = db.query(Vehicle).filter(

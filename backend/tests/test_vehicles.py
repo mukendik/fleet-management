@@ -5,21 +5,30 @@ from app.main import app
 client = TestClient(app)
 
 
-def get_token():
+def get_manager_token():
     response = client.post(
         "/auth/login",
         json={
-            "email": "test@gmail.com",
+            "email": "manager@gmail.com",
             "password": "123456"
         }
-        #headers={"Authorization": f"Bearer {token}"}
+    )
+
+    return response.json()["access_token"]
+
+def get_driver_token():
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "driver@gmail.com",
+            "password": "123456"
+        }
     )
 
     return response.json()["access_token"]
 
 def test_create_vehicle():
-    token = get_token()
-    print ("token =", token)
+    token = get_manager_token()
     response = client.post(
         "/vehicles",
         json={
@@ -31,8 +40,20 @@ def test_create_vehicle():
     assert response.status_code == 200
     assert response.json()["name"] == "BMW X5"
 
+def test_driver_create_vehicle():
+    token = get_driver_token()
+    response = client.post(
+        "/vehicles",
+        json={
+            "name": "BMW X5",
+            "plate_number": "AA-123-BB"
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 403
+
 def test_update_vehicle():
-    token = get_token()
+    token = get_manager_token()
 
     created = client.post(
         "/vehicles",
@@ -56,7 +77,7 @@ def test_update_vehicle():
 
 
 def test_display_vehicles():
-    token = get_token()
+    token = get_manager_token()
 
     response = client.get(
         "/vehicles",
@@ -65,8 +86,18 @@ def test_display_vehicles():
 
     assert response.status_code == 200
 
+def test_driver_display_vehicles():
+    token = get_driver_token()
+
+    response = client.get(
+        "/vehicles",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 403
+
 def test_delete_vehicle():
-    token = get_token()
+    token = get_manager_token()
 
     created = client.post(
         "/vehicles",
@@ -119,7 +150,8 @@ def test_company_isolation():
     client.post("/auth/register", json={
         "email": "user2@test.com",
         "password": "123456",
-        "company_id": 2
+        "company_id": 2,
+        "role": "admin"
     })
 
     login2 = client.post("/auth/login", json={

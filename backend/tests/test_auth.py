@@ -2,20 +2,28 @@
 
 def test_refresh_token(client):
    
-   # 1. create user
+   # 1. create  manager user 
     client.post("/auth/register", json={
-    "email": "test@gmail.com",
+    "email": "manager@gmail.com",
     "password": "123456",
-    "company_id": 1
+    "company_id": 1, 
+    "role":"manager"
     })
+
+    # 2. create  driver user 
+    client.post("/auth/register", json={
+    "email": "driver@gmail.com",
+    "password": "123456",
+    "company_id": 1, 
+    "role":"driver"
+    })
+    
    
     # 2. login
     login = client.post("/auth/login", json={
-        "email": "test@gmail.com",
+        "email": "manager@gmail.com",
         "password": "123456"
     })
-    print(login.status_code)
-    print(login.json())
     assert login.status_code == 200
 
     data = login.json()
