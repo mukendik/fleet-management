@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
 @router.get("")
 def get_vehicles(
+    
     db: Session = Depends(get_db),
     user=Depends(require_roles(["admin", "manager"])),
     current_user: User = Depends(get_current_user)
@@ -22,6 +24,58 @@ def get_vehicles(
         Vehicle.company_id == current_user.company_id
     ).all()
 
+@router.get("/vehicles")
+def get_vehicles(
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+
+    search: str | None = None,
+    status: str | None = None,
+    brand: str | None = None,
+
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    query = db.query(Vehicle).filter(
+        Vehicle.company_id == current_user.company_id
+    )
+
+    # SEARCH
+    if search:
+        query = query.filter(
+            or_(
+                Vehicle.name.ilike(f"%{search}%"),
+                Vehicle.plate_number.ilike(f"%{search}%")
+            )
+        )
+
+    # FILTERS
+    if status:
+        query = query.filter(
+            Vehicle.status == status
+        )
+
+    if brand:
+        query = query.filter(
+            Vehicle.brand == brand
+        )
+
+    # TOTAL
+    total = query.count()
+
+    # PAGINATION
+    vehicles = query.offset(
+        (page - 1) * size
+    ).limit(size).all()
+
+    return {
+        "items": vehicles,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": (total + size - 1) // size
+    }
 
 #CREATE VEHICLE
 @router.post("")
@@ -34,6 +88,11 @@ def create_vehicle(
     vehicle = Vehicle(
         name=data.name,
         plate_number=data.plate_number,
+
+        brand=data.brand,
+        model=data.model,
+        year=data.year,
+
         company_id=current_user.company_id
     )
 

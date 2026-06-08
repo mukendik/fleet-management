@@ -7,5 +7,15 @@ class Vehicle(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     plate_number = Column(String, unique=True, nullable=False)
-
     company_id = Column(Integer, ForeignKey("companies.id"))
+
+    # NOUVEAUX CHAMPS
+    brand = Column(String)
+    model = Column(String)
+
+    year = Column(Integer)
+
+    status = Column(
+        String,
+        default="active"
+    )
