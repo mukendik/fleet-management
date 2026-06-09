@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from typing import List
 
 class VehicleCreate(BaseModel):
     name: str
@@ -7,6 +8,7 @@ class VehicleCreate(BaseModel):
     brand: str | None = None
     model: str | None = None
     year: int | None = None
+    status: str | None = None
 
 
 class VehicleUpdate(BaseModel):
@@ -30,3 +32,10 @@ class VehicleResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class VehicleListResponse(BaseModel):
+    items: list[VehicleResponse]
+    total: int
+    page: int
+    size: int
+    pages: int
