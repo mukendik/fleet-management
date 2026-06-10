@@ -9,7 +9,22 @@ from app.core.exceptions import register_exception_handlers
 
 app = FastAPI(
     title="Fleet Manager API",
-    version="1.0.0"
+    description="""
+API de gestion de flotte automobile.
+
+Fonctionnalités :
+- Authentification JWT
+- Gestion des véhicules
+- Pagination
+- Recherche
+- Filtres
+- Multi-tenant
+""",
+    version="1.0.0",
+    contact={
+        "name": "Ghislain Mukendi",
+        "email": "contact@qualitydevzone.fr",
+    },
 )
 
 register_exception_handlers(app)
