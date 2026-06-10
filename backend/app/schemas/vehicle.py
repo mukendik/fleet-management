@@ -15,6 +15,9 @@ class VehicleCreate(BaseModel):
             "example": {
                 "name": "BMW X5",
                 "plate_number": "AA-123-BB",
+                "brand": "BMW",
+                "model": "X5",
+                "year": 2024,
                 "status": "active"
             }
         }
