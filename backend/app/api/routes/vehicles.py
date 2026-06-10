@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 
 from app.api.deps import get_db, get_current_user, require_roles
@@ -78,10 +79,18 @@ def create_vehicle(
     )
 
     db.add(vehicle)
-    db.commit()
-    db.refresh(vehicle)
 
-    return vehicle
+    try:
+        db.commit()
+        db.refresh(vehicle)
+        return vehicle
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Plate number already exists"
+        )
 
 # GET VEHICLE BY ID (DETAIL)
 @router.get("/{vehicle_id}")
