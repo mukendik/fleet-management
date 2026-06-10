@@ -7,7 +7,7 @@ from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
-
+from app.services.vehicle_service import get_vehicle_by_id
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -99,17 +99,14 @@ def create_vehicle(
         )
 
 # GET VEHICLE BY ID (DETAIL)
-@router.get("/{vehicle_id}", response_model=VehicleResponse)
+@router.get("/{vehicle_id}")
 def get_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
-    vehicle = db.query(Vehicle).filter(
-        Vehicle.id == vehicle_id,
-        Vehicle.company_id == current_user.company_id
-    ).first()
+    vehicle = get_vehicle_by_id(db, vehicle_id, current_user.company_id)
 
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
