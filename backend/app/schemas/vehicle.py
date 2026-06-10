@@ -8,7 +8,16 @@ class VehicleCreate(BaseModel):
     brand: str | None = None
     model: str | None = None
     year: int | None = None
-    status: str | None = None
+    status: str = "active"
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "BMW X5",
+                "plate_number": "AA-123-BB",
+                "status": "active"
+            }
+        }
 
 
 class VehicleUpdate(BaseModel):
