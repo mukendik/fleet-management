@@ -99,12 +99,12 @@ def create_vehicle(
         )
 
 # GET VEHICLE BY ID (DETAIL)
-@router.get("/{vehicle_id}")
+@router.get("/{vehicle_id}", response_model=VehicleResponse)
 def get_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_roles(["admin", "manager"])),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
     vehicle = db.query(Vehicle).filter(
         Vehicle.id == vehicle_id,
