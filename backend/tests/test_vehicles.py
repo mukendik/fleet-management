@@ -48,13 +48,13 @@ def test_create_vehicle():
 
 def test_vehicle_detail():
     token = get_manager_token()
-
+    
     # 1. créer un véhicule
     create_response = client.post(
         "/vehicles",
         json={
             "name": "BMW X5",
-            "plate_number": "AA-123-BB",
+            "plate_number": "AA-793-BB",
             "status": "active"
         },
         headers={"Authorization": f"Bearer {token}"}
@@ -77,7 +77,7 @@ def test_vehicle_detail():
     # 3. vérifications
     assert data["id"] == vehicle_id
     assert data["name"] == "BMW X5"
-    assert data["plate_number"] == "AA-123-BB"
+    assert data["plate_number"] == "AA-793-BB"
     assert data["status"] == "active"
 
 
@@ -246,7 +246,7 @@ def test_vehicle_pagination():
     assert len(data["items"]) == 10
     assert data["page"] == 1
     assert data["limit"] == 10
-    assert data["total"] == 17
+    assert data["total"] == 18
     assert data["pages"] == 2
 
 def test_vehicle_search():
