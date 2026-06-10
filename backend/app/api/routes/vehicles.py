@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
 from app.models.vehicle import Vehicle
-from app.schemas.vehicle import VehicleCreate, VehicleUpdate
+from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
@@ -14,8 +14,8 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
 @router.get("")
 def get_vehicles(
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1,description="Page number"),
+    limit: int = Query(10, ge=1, le=100,description="Number of items per page"),
 
     search: str | None = None,
     status: str | None = None,
@@ -61,7 +61,13 @@ def get_vehicles(
 
 
 #CREATE VEHICLE
-@router.post("")
+@router.post(
+    "",
+    response_model=VehicleResponse,
+    status_code=201,
+    summary="Create a vehicle",
+    description="Create a new vehicle for the current company"
+)
 def create_vehicle(
     data: VehicleCreate,
     db: Session = Depends(get_db),
