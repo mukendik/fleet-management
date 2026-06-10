@@ -45,6 +45,42 @@ def test_create_vehicle():
     assert response.status_code == 201
     assert response.json()["name"] == "BMW X5"
 
+
+def test_vehicle_detail():
+    token = get_manager_token()
+
+    # 1. créer un véhicule
+    create_response = client.post(
+        "/vehicles",
+        json={
+            "name": "BMW X5",
+            "plate_number": "AA-123-BB",
+            "status": "active"
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert create_response.status_code == 201
+
+    vehicle_id = create_response.json()["id"]
+
+    # 2. récupérer le détail
+    response = client.get(
+        f"/vehicles/{vehicle_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # 3. vérifications
+    assert data["id"] == vehicle_id
+    assert data["name"] == "BMW X5"
+    assert data["plate_number"] == "AA-123-BB"
+    assert data["status"] == "active"
+
+
 def test_driver_create_vehicle():
     token = get_driver_token()
     response = client.post(
