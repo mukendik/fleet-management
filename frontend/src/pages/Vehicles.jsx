@@ -30,6 +30,8 @@ const modalStyle = {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -65,6 +67,22 @@ const modalStyle = {
         setLoading(false);
       }
     };
+  
+  const openEditModal = (vehicle) => {
+    setIsEditMode(true);
+    setSelectedVehicleId(vehicle.id);
+
+    setForm({
+      name: vehicle.name || "",
+      brand: vehicle.brand || "",
+      model: vehicle.model || "",
+      year: vehicle.year || "",
+      plate_number: vehicle.plate_number || "",
+      status: vehicle.status || "active",
+    });
+
+    setIsModalOpen(true);
+  };
 
  useEffect(() => {
   client.get("/vehicles")
@@ -150,7 +168,6 @@ const modalStyle = {
       </tbody>
     </table>
 
-    {/* MODAL ✔️ DANS LE RETURN */}
     {isModalOpen && (
       <div style={overlayStyle}>
         <div style={modalStyle}>
