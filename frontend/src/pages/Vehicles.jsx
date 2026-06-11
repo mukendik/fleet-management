@@ -24,9 +24,9 @@ export default function Vehicles() {
       });
 }, []);
 
-  return (
-    <div>
-      <h1>Vehicles ({total})</h1>
+    return (
+    <div style={{ padding: "20px" }}>
+      <h1>Vehicles ({vehicles.length})</h1>
 
       <button
         onClick={() => {
@@ -37,12 +37,33 @@ export default function Vehicles() {
         Logout
       </button>
 
-      {vehicles.map(v => (
-        <div key={v.id}>
-          {v.name} - {v.plate_number}
-        </div>
-      ))}
-      <p>Page 1 / {pages}</p>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginTop: "20px",
+        }}
+      >
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Plate Number</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {vehicles.map((vehicle) => (
+            <tr key={vehicle.id}>
+              <td>{vehicle.id}</td>
+              <td>{vehicle.name}</td>
+              <td>{vehicle.plate_number}</td>
+              <td>{vehicle.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
