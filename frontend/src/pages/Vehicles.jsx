@@ -41,32 +41,27 @@ const modalStyle = {
     plate_number: "",
     status: "active",
   });
-  const handleCreate = async () => {
-      try {
-        setLoading(true);
+  const handleSave = async () => {
+    try {
+      setLoading(true);
 
+      if (isEditMode) {
+        await client.put(`/vehicles/${selectedVehicleId}`, form);
+      } else {
         await client.post("/vehicles", form);
-
-        setIsModalOpen(false);
-
-        const res = await client.get("/vehicles");
-        setVehicles(res.data.items);
-
-        setForm({
-          name: "",
-          brand: "",
-          model: "",
-          year: "",
-          plate_number: "",
-          status: "active",
-        });
-
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
       }
-    };
+
+      setIsModalOpen(false);
+
+      const res = await client.get("/vehicles");
+      setVehicles(res.data.items);
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const openEditModal = (vehicle) => {
       setIsEditMode(true);
@@ -83,7 +78,6 @@ const modalStyle = {
 
     setIsModalOpen(true);
   };
-  
   const openCreateModal = () => {
     setIsEditMode(false);
     setSelectedVehicleId(null);
@@ -98,6 +92,12 @@ const modalStyle = {
     });
 
     setIsModalOpen(true);
+  };
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setSelectedVehicleId(null);
   };
 
  useEffect(() => {
@@ -136,7 +136,7 @@ const modalStyle = {
   <div style={{ padding: "20px" }}>
     <h1>Vehicles ({vehicles.length})</h1>
 
-    <button onClick={() => setIsModalOpen(true)}>
+    <button onClick={openCreateModal}>
       + Create Vehicle
     </button>
 
@@ -176,7 +176,9 @@ const modalStyle = {
             <td>{vehicle.status}</td>
             <td>
               <button>View</button>
-              <button>Edit</button>
+              <button onClick={() => openEditModal(vehicle)}>
+                Edit
+              </button>
               <button>Delete</button>
             </td>
           </tr>
@@ -187,7 +189,7 @@ const modalStyle = {
     {isModalOpen && (
       <div style={overlayStyle}>
         <div style={modalStyle}>
-          <h2>Create Vehicle</h2>
+          {isEditMode ? "Edit Vehicle" : "Create Vehicle"}
 
           <input
             placeholder="Name"
@@ -228,14 +230,16 @@ const modalStyle = {
           </select>
 
           <div style={{ marginTop: "10px" }}>
-            <button onClick={handleCreate} disabled={loading}>
-              {loading ? (
-                  <span>⏳ Saving...</span>
-                ) : (
-                  "Save"
-                )}
+            <button onClick={handleSave} disabled={loading}>
+              {loading
+                ? "Saving..."
+                : isEditMode
+                  ? "Update"
+                  : "Create"
+              }
             </button>
-            <button onClick={() => !loading && setIsModalOpen(false)}>
+
+            <button onClick={closeModal}>
               Cancel
             </button>
           </div>
