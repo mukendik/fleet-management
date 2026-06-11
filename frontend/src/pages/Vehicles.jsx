@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import VehicleTable from "../components/vehicles/VehicleTable";
+import VehicleModal from "../components/vehicles/VehicleModal";
+import ConfirmModal from "../components/vehicles/ConfirmModal";
+
 import {
   getVehicles,
   createVehicle,
@@ -8,19 +12,18 @@ import {
   deleteVehicle,
 } from "../services/vehicleService";
 
-import VehicleModal from "../components/VehicleModal";
-
 export default function Vehicles() {
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-
   const navigate = useNavigate();
 
-  const loadVehicles = async () => {
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [vehicleToDelete, setVehicleToDelete] = useState(null);
+ 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  const load = async () => {
     try {
       const data = await getVehicles();
       setVehicles(data.items);
@@ -28,111 +31,136 @@ export default function Vehicles() {
       navigate("/login");
     }
   };
-
-  useEffect(() => {
-    loadVehicles();
-  }, []);
-
-  const handleSave = async (formData) => {
+  const handleDelete = async () => {
     try {
       setLoading(true);
 
-      if (isEditMode) {
-        await updateVehicle(selectedVehicle.id, formData);
-      } else {
-        await createVehicle(formData);
-      }
+      await deleteVehicle(vehicleToDelete.id);
 
-      setIsModalOpen(false);
-      setIsEditMode(false);
-      setSelectedVehicle(null);
+      setConfirmOpen(false);
+      setVehicleToDelete(null);
 
       await loadVehicles();
-    } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const openCreateModal = () => {
-    setIsEditMode(false);
-    setSelectedVehicle(null);
-    setIsModalOpen(true);
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleSave = async (form) => {
+    setLoading(true);
+
+    try {
+      if (selectedVehicle) {
+        await updateVehicle(selectedVehicle.id, form);
+      } else {
+        await createVehicle(form);
+      }
+
+      setIsModalOpen(false);
+      setSelectedVehicle(null);
+
+      await load();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openEditModal = (vehicle) => {
-    setIsEditMode(true);
-    setSelectedVehicle(vehicle);
-    setIsModalOpen(true);
-  };
+   return (
+    <div style={{ padding: 20 }}>
+            <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+        }}
+      >
+        <div>
+    <h1
+      style={{
+        margin: 0,
+        fontSize: "28px",
+      }}
+    >
+      🚗 Fleet Manager
+    </h1>
 
-  const handleDelete = async (id) => {
-    await deleteVehicle(id);
-    await loadVehicles();
-  };
+    <p
+      style={{
+        margin: "4px 0 0",
+        color: "#6b7280",
+      }}
+    >
+      Manage your vehicles
+    </p>
+  </div>
+        <span
+          style={{
+            color: "#374151",
+            fontWeight: "500",
+          }}
+        >
+          Welcome Ghislain
+        </span>
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>Vehicles ({vehicles.length})</h1>
-
-      <button onClick={openCreateModal}>+ Create Vehicle</button>
+        <button
+          onClick={() => {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }}
+          style={{
+            background: "#ef4444",
+            color: "white",
+            border: "none",
+            padding: "8px 14px",
+            borderRadius: "8px",
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       <button
         onClick={() => {
-          localStorage.removeItem("token");
-          navigate("/login");
+          setSelectedVehicle(null);
+          setIsModalOpen(true);
         }}
       >
-        Logout
+        + Create Vehicle
       </button>
 
-      <table style={{ width: "100%", marginTop: "20px" }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Brand</th>
-            <th>Model</th>
-            <th>Year</th>
-            <th>Plate Number</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {vehicles.map((vehicle) => (
-            <tr key={vehicle.id}>
-              <td>{vehicle.id}</td>
-              <td>{vehicle.name}</td>
-              <td>{vehicle.brand || "-"}</td>
-              <td>{vehicle.model || "-"}</td>
-              <td>{vehicle.year || "-"}</td>
-              <td>{vehicle.plate_number}</td>
-              <td>{vehicle.status}</td>
-              <td>
-                <button>View</button>
-                <button onClick={() => openEditModal(vehicle)}>Edit</button>
-                <button onClick={() => handleDelete(vehicle.id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <VehicleTable
+        data={vehicles}
+        onEdit={(v) => {
+          setSelectedVehicle(v);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDelete}
+      />
 
       <VehicleModal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedVehicle(null);
-        }}
+        initialData={selectedVehicle}
+        onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         loading={loading}
-        isEditMode={isEditMode}
-        initialData={selectedVehicle}
+      />
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Delete Vehicle"
+        message={`Are you sure you want to delete ${vehicleToDelete?.name} ?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={loading}
+        onClose={() => {
+          setConfirmOpen(false);
+          setVehicleToDelete(null);
+        }}
+        onConfirm={handleDelete}
       />
     </div>
   );
