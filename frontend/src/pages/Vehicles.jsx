@@ -29,6 +29,7 @@ const modalStyle = {
   const [pages, setPages] = useState(0);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -40,11 +41,12 @@ const modalStyle = {
   });
   const handleCreate = async () => {
       try {
+        setLoading(true);
+
         await client.post("/vehicles", form);
 
         setIsModalOpen(false);
 
-        // refresh list
         const res = await client.get("/vehicles");
         setVehicles(res.data.items);
 
@@ -59,6 +61,8 @@ const modalStyle = {
 
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -191,8 +195,14 @@ const modalStyle = {
           </select>
 
           <div style={{ marginTop: "10px" }}>
-            <button onClick={handleCreate}>Save</button>
-            <button onClick={() => setIsModalOpen(false)}>
+            <button onClick={handleCreate} disabled={loading}>
+              {loading ? (
+                  <span>⏳ Saving...</span>
+                ) : (
+                  "Save"
+                )}
+            </button>
+            <button onClick={() => !loading && setIsModalOpen(false)}>
               Cancel
             </button>
           </div>
