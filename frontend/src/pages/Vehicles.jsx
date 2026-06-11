@@ -69,16 +69,32 @@ const modalStyle = {
     };
   
   const openEditModal = (vehicle) => {
-    setIsEditMode(true);
-    setSelectedVehicleId(vehicle.id);
+      setIsEditMode(true);
+      setSelectedVehicleId(vehicle.id);
+
+      setForm({
+        name: vehicle.name || "",
+        brand: vehicle.brand || "",
+        model: vehicle.model || "",
+        year: vehicle.year || "",
+        plate_number: vehicle.plate_number || "",
+        status: vehicle.status || "active",
+      });
+
+    setIsModalOpen(true);
+  };
+  
+  const openCreateModal = () => {
+    setIsEditMode(false);
+    setSelectedVehicleId(null);
 
     setForm({
-      name: vehicle.name || "",
-      brand: vehicle.brand || "",
-      model: vehicle.model || "",
-      year: vehicle.year || "",
-      plate_number: vehicle.plate_number || "",
-      status: vehicle.status || "active",
+      name: "",
+      brand: "",
+      model: "",
+      year: "",
+      plate_number: "",
+      status: "active",
     });
 
     setIsModalOpen(true);
