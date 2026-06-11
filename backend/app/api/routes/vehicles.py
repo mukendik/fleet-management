@@ -8,6 +8,8 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services.vehicle_service import get_vehicle_by_id
+from typing import Optional
+
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -17,9 +19,9 @@ def get_vehicles(
     page: int = Query(1, ge=1,description="Page number"),
     limit: int = Query(10, ge=1, le=100,description="Number of items per page"),
 
-    search: str | None = None,
-    status: str | None = None,
-    brand: str | None = None,
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+    brand: Optional[str] = None,
 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

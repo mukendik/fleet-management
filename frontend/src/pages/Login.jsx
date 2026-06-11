@@ -1,61 +1,52 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { login } from "../api/auth";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-
+const Login = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
+  const handleLogin = async () => {
     try {
-      const res = await login(email, password);
+      const res = await axios.post("http://localhost:8000/auth/login", {
+        email,
+        password,
+      });
 
-      // adapte selon ton backend FastAPI
-      const token = res.data.access_token;
+      localStorage.setItem("token", res.data.access_token);
+      console.log("TOKEN =", localStorage.getItem("token"));
+      //window.location.reload();
 
-      localStorage.setItem("token", token);
-
-      navigate("/");
+      navigate("/vehicles");
     } catch (err) {
-      setError("Invalid credentials");
+      console.log("Login error", err);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "100px auto" }}>
-      <h2>Login</h2>
+    <div>
+      <h1>Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
+      <input
+        placeholder="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
+      <input
+        placeholder="password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
-        <button style={{ width: "100%", padding: 10 }}>
-          Login
-        </button>
-
-        {error && (
-          <p style={{ color: "red", marginTop: 10 }}>{error}</p>
-        )}
-      </form>
+      <button onClick={handleLogin}>
+        Login
+      </button>
     </div>
   );
-}
+};
+
+export default Login;

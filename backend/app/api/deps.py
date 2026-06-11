@@ -47,7 +47,7 @@ def get_current_user(
 
     if user is None:
         raise credentials_exception
-    print("########### USER: ############", user.role)
+    
     return user
 
 from fastapi import Depends, HTTPException, status

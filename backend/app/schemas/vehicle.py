@@ -5,9 +5,9 @@ from typing import List
 class VehicleCreate(BaseModel):
     name: str
     plate_number: str
-    brand: str | None = None
-    model: str | None = None
-    year: int | None = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
     status: str = "active"
 
     class Config:
@@ -27,19 +27,19 @@ class VehicleUpdate(BaseModel):
     name: Optional[str] = None
     plate_number: Optional[str] = None
 
-    brand: str | None = None
-    model: str | None = None
-    year: int | None = None
-    status: str | None = None
+    brand: Optional[str] = None,
+    model: Optional[str] = None
+    year: Optional[int] = None
+    status: Optional[str] = None
 
 class VehicleResponse(BaseModel):
     id: int
     name: str
     plate_number: str
 
-    brand: str | None = None
-    model: str | None = None
-    year: int | None = None
+    brand: Optional[str] = None,
+    model: Optional[str] = None
+    year: Optional[int] = None
     status: str
 
     class Config:
