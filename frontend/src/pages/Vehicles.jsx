@@ -1,253 +1,139 @@
 import { useEffect, useState } from "react";
-import client from "../api/client";
 import { useNavigate } from "react-router-dom";
 
-export default function Vehicles() {const overlayStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: "rgba(0,0,0,0.5)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
+import {
+  getVehicles,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle,
+} from "../services/vehicleService";
 
-const modalStyle = {
-  background: "white",
-  padding: "20px",
-  width: "400px",
-  borderRadius: "8px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-};
+import VehicleModal from "../components/VehicleModal";
 
+export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [pages, setPages] = useState(0);
-  const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    brand: "",
-    model: "",
-    year: "",
-    plate_number: "",
-    status: "active",
-  });
-  const handleSave = async () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  const navigate = useNavigate();
+
+  const loadVehicles = async () => {
+    try {
+      const data = await getVehicles();
+      setVehicles(data.items);
+    } catch (err) {
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    loadVehicles();
+  }, []);
+
+  const handleSave = async (formData) => {
     try {
       setLoading(true);
 
       if (isEditMode) {
-        await client.put(`/vehicles/${selectedVehicleId}`, form);
+        await updateVehicle(selectedVehicle.id, formData);
       } else {
-        await client.post("/vehicles", form);
+        await createVehicle(formData);
       }
 
       setIsModalOpen(false);
+      setIsEditMode(false);
+      setSelectedVehicle(null);
 
-      const res = await client.get("/vehicles");
-      setVehicles(res.data.items);
-
+      await loadVehicles();
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
-  
-  const openEditModal = (vehicle) => {
-      setIsEditMode(true);
-      setSelectedVehicleId(vehicle.id);
 
-      setForm({
-        name: vehicle.name || "",
-        brand: vehicle.brand || "",
-        model: vehicle.model || "",
-        year: vehicle.year || "",
-        plate_number: vehicle.plate_number || "",
-        status: vehicle.status || "active",
-      });
-
-    setIsModalOpen(true);
-  };
   const openCreateModal = () => {
     setIsEditMode(false);
-    setSelectedVehicleId(null);
-
-    setForm({
-      name: "",
-      brand: "",
-      model: "",
-      year: "",
-      plate_number: "",
-      status: "active",
-    });
-
+    setSelectedVehicle(null);
     setIsModalOpen(true);
   };
-  
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setIsEditMode(false);
-    setSelectedVehicleId(null);
+
+  const openEditModal = (vehicle) => {
+    setIsEditMode(true);
+    setSelectedVehicle(vehicle);
+    setIsModalOpen(true);
   };
 
- useEffect(() => {
-  client.get("/vehicles")
-    .then(res => {
-    setVehicles(res.data.items);
-    setTotal(res.data.total);
-    setPages(res.data.pages);
-  })
-    .catch(err => {
-        if (err.response?.status === 401) {
-          navigate("/login");
-        } else {
-          console.error("API error", err);
-        }
-      });
-}, []);
-      const thStyle = {
-        border: "1px solid #ddd",
-        padding: "10px",
-        background: "#f5f5f5",
-        textAlign: "left",
-      };
-
-      const tdStyle = {
-        border: "1px solid #ddd",
-        padding: "10px",
-      };
-
-      const btnStyle = {
-        padding: "5px 10px",
-        cursor: "pointer",
-      };
+  const handleDelete = async (id) => {
+    await deleteVehicle(id);
+    await loadVehicles();
+  };
 
   return (
-  <div style={{ padding: "20px" }}>
-    <h1>Vehicles ({vehicles.length})</h1>
+    <div style={{ padding: "20px" }}>
+      <h1>Vehicles ({vehicles.length})</h1>
 
-    <button onClick={openCreateModal}>
-      + Create Vehicle
-    </button>
+      <button onClick={openCreateModal}>+ Create Vehicle</button>
 
-    <button
-      onClick={() => {
-        localStorage.removeItem("token");
-        navigate("/login");
-      }}
-    >
-      Logout
-    </button>
+      <button
+        onClick={() => {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }}
+      >
+        Logout
+      </button>
 
-    {/* TABLE */}
-    <table style={{ width: "100%", marginTop: "20px" }}>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Brand</th>
-          <th>Model</th>
-          <th>Year</th>
-          <th>Plate Number</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {vehicles.map((vehicle) => (
-          <tr key={vehicle.id}>
-            <td>{vehicle.id}</td>
-            <td>{vehicle.name}</td>
-            <td>{vehicle.brand || "-"}</td>
-            <td>{vehicle.model || "-"}</td>
-            <td>{vehicle.year || "-"}</td>
-            <td>{vehicle.plate_number}</td>
-            <td>{vehicle.status}</td>
-            <td>
-              <button>View</button>
-              <button onClick={() => openEditModal(vehicle)}>
-                Edit
-              </button>
-              <button>Delete</button>
-            </td>
+      <table style={{ width: "100%", marginTop: "20px" }}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Year</th>
+            <th>Plate Number</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
 
-    {isModalOpen && (
-      <div style={overlayStyle}>
-        <div style={modalStyle}>
-          {isEditMode ? "Edit Vehicle" : "Create Vehicle"}
+        <tbody>
+          {vehicles.map((vehicle) => (
+            <tr key={vehicle.id}>
+              <td>{vehicle.id}</td>
+              <td>{vehicle.name}</td>
+              <td>{vehicle.brand || "-"}</td>
+              <td>{vehicle.model || "-"}</td>
+              <td>{vehicle.year || "-"}</td>
+              <td>{vehicle.plate_number}</td>
+              <td>{vehicle.status}</td>
+              <td>
+                <button>View</button>
+                <button onClick={() => openEditModal(vehicle)}>Edit</button>
+                <button onClick={() => handleDelete(vehicle.id)}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-          <input
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-
-          <input
-            placeholder="Brand"
-            value={form.brand}
-            onChange={(e) => setForm({ ...form, brand: e.target.value })}
-          />
-
-          <input
-            placeholder="Model"
-            value={form.model}
-            onChange={(e) => setForm({ ...form, model: e.target.value })}
-          />
-
-          <input
-            placeholder="Year"
-            value={form.year}
-            onChange={(e) => setForm({ ...form, year: e.target.value })}
-          />
-
-          <input
-            placeholder="Plate number"
-            value={form.plate_number}
-            onChange={(e) => setForm({ ...form, plate_number: e.target.value })}
-          />
-
-          <select
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-
-          <div style={{ marginTop: "10px" }}>
-            <button onClick={handleSave} disabled={loading}>
-              {loading
-                ? "Saving..."
-                : isEditMode
-                  ? "Update"
-                  : "Create"
-              }
-            </button>
-
-            <button onClick={closeModal}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-);
-
-  
+      <VehicleModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedVehicle(null);
+        }}
+        onSave={handleSave}
+        loading={loading}
+        isEditMode={isEditMode}
+        initialData={selectedVehicle}
+      />
+    </div>
+  );
 }
