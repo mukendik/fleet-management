@@ -1,13 +1,43 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Vehicles from "./pages/Vehicles";
+import Dashboard from "./pages/Dashboard";
+
+import AppLayout from "./layouts/AppLayout";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/login" element={<Login />} />
-      <Route path="/vehicles" element={<Vehicles />} />
-      <Route path="*" element={<Navigate to="/login" />} />
+
+      {/* Protected SaaS */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Dashboard />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/vehicles"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Vehicles />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* default */}
+      <Route path="*" element={<Login />} />
     </Routes>
   );
 }

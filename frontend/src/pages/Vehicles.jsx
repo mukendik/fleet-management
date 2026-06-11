@@ -71,59 +71,6 @@ export default function Vehicles() {
 
    return (
     <div style={{ padding: 20 }}>
-            <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        <div>
-    <h1
-      style={{
-        margin: 0,
-        fontSize: "28px",
-      }}
-    >
-      🚗 Fleet Manager
-    </h1>
-
-    <p
-      style={{
-        margin: "4px 0 0",
-        color: "#6b7280",
-      }}
-    >
-      Manage your vehicles
-    </p>
-  </div>
-        <span
-          style={{
-            color: "#374151",
-            fontWeight: "500",
-          }}
-        >
-          Welcome Ghislain
-        </span>
-
-        <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            navigate("/login");
-          }}
-          style={{
-            background: "#ef4444",
-            color: "white",
-            border: "none",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
-      </div>
-
       <button
         onClick={() => {
           setSelectedVehicle(null);
