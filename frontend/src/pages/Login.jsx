@@ -7,44 +7,66 @@ const Login = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post("http://localhost:8000/auth/login", {
-        email,
-        password,
-      });
+const handleLogin = async () => {
+  try {
+    setError("");
 
-      localStorage.setItem("token", res.data.access_token);
-      console.log("TOKEN =", localStorage.getItem("token"));
-      //window.location.reload();
+    const res = await axios.post("http://localhost:8000/auth/login", {
+      email,
+      password,
+    });
 
-      navigate("/vehicles");
-    } catch (err) {
-      console.log("Login error", err);
+    localStorage.setItem("token", res.data.access_token);
+
+    navigate("/vehicles");
+
+  } catch (err) {
+    console.error(err);
+
+    if (err.response?.status === 401) {
+      setError("Email ou mot de passe incorrect");
+    } else {
+      setError("Erreur serveur. Veuillez réessayer.");
     }
-  };
+  }
+};
 
   return (
     <div>
       <h1>Login</h1>
 
-      <input
+     <input
         placeholder="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+       // onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError("");
+          }}
       />
 
       <input
         placeholder="password"
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+      //  onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError("");
+          }}
       />
 
-      <button onClick={handleLogin}>
-        Login
-      </button>
+      {error && (
+        <p style={{ color: "red" }}>
+          {error}
+        </p>
+      )}
+
+          <button onClick={handleLogin}>
+            Login
+          </button>
     </div>
   );
 };
