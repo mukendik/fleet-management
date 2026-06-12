@@ -86,7 +86,7 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
                   </button>
 
                   <button
-                    onClick={() => onDelete(v)}
+                    onClick={() => onDelete(v.id)}
                     style={{
                       background: "#dc2626",
                       color: "white",
