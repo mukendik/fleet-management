@@ -6,21 +6,16 @@ import {
   deleteVehicle,
 } from "../services/vehicleService";
 
-export function useVehicles() {
+export function useVehicles(navigate) {
   const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const load = async () => {
     try {
-      setLoading(true);
       const data = await getVehicles();
       setVehicles(data.items);
     } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+      navigate("/login");
     }
   };
 
@@ -28,35 +23,42 @@ export function useVehicles() {
     load();
   }, []);
 
-  const create = async (data) => {
-    setActionLoading(true);
-    await createVehicle(data);
-    await load();
-    setActionLoading(false);
+  const create = async (form) => {
+    setLoading(true);
+    try {
+      await createVehicle(form);
+      await load();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const update = async (id, data) => {
-    setActionLoading(true);
-    await updateVehicle(id, data);
-    await load();
-    setActionLoading(false);
+  const update = async (id, form) => {
+    setLoading(true);
+    try {
+      await updateVehicle(id, form);
+      await load();
+    } finally {
+      setLoading(false);
+    }
   };
 
   const remove = async (id) => {
-    setActionLoading(true);
-    await deleteVehicle(id);
-    await load();
-    setActionLoading(false);
+    setLoading(true);
+    try {
+      await deleteVehicle(id);
+      await load();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
     vehicles,
     loading,
-    actionLoading,
-    error,
+    load,
     create,
     update,
     remove,
-    reload: load,
   };
 }
