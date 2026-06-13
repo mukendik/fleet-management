@@ -1,12 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 
 
 # =========================
-# BASE
+# VEHICLE CREATE
 # =========================
-class VehicleBase(BaseModel):
+class VehicleCreate(BaseModel):
     name: str
     plate_number: str
 
@@ -14,13 +14,6 @@ class VehicleBase(BaseModel):
     model: Optional[str] = None
     year: Optional[int] = None
 
-    status: str = "active"
-
-
-# =========================
-# CREATE
-# =========================
-class VehicleCreate(VehicleBase):
     vin_number: Optional[str] = None
     mileage: int = 0
 
@@ -33,6 +26,8 @@ class VehicleCreate(VehicleBase):
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
+    status: str = "active"
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -41,15 +36,22 @@ class VehicleCreate(VehicleBase):
                 "brand": "BMW",
                 "model": "X5",
                 "year": 2024,
+                "vin_number": "WBA123456789",
                 "mileage": 120000,
                 "fuel_type": "diesel",
+                "transmission": "automatic",
+                "engine": "3.0L",
+                "engine_capacity": 3000,
+                "registration_date": "2024-01-01",
+                "insurance_expiry_date": "2025-01-01",
+                "technical_inspection_expiry_date": "2025-06-01",
                 "status": "active"
             }
         }
 
 
 # =========================
-# UPDATE (IMPORTANT: ALL OPTIONAL)
+# VEHICLE UPDATE
 # =========================
 class VehicleUpdate(BaseModel):
     name: Optional[str] = None
@@ -58,8 +60,6 @@ class VehicleUpdate(BaseModel):
     brand: Optional[str] = None
     model: Optional[str] = None
     year: Optional[int] = None
-
-    status: Optional[str] = None
 
     vin_number: Optional[str] = None
     mileage: Optional[int] = None
@@ -73,12 +73,30 @@ class VehicleUpdate(BaseModel):
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
+    status: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "BMW X5 Updated",
+                "mileage": 130000,
+                "status": "inactive"
+            }
+        }
+
 
 # =========================
-# RESPONSE (API OUTPUT)
+# VEHICLE RESPONSE
 # =========================
-class VehicleResponse(VehicleBase):
+class VehicleResponse(BaseModel):
     id: int
+
+    name: str
+    plate_number: str
+
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
 
     vin_number: Optional[str] = None
     mileage: int = 0
@@ -92,16 +110,38 @@ class VehicleResponse(VehicleBase):
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
+    status: str
+
     class Config:
         from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "name": "BMW X5",
+                "plate_number": "AA-123-BB",
+                "brand": "BMW",
+                "model": "X5",
+                "year": 2024,
+                "vin_number": "WBA123456789",
+                "mileage": 120000,
+                "fuel_type": "diesel",
+                "transmission": "automatic",
+                "engine": "3.0L",
+                "engine_capacity": 3000,
+                "registration_date": "2024-01-01",
+                "insurance_expiry_date": "2025-01-01",
+                "technical_inspection_expiry_date": "2025-06-01",
+                "status": "active"
+            }
+        }
 
 
 # =========================
-# LIST RESPONSE (PAGINATION)
+# VEHICLE LIST RESPONSE (PAGINATION)
 # =========================
 class VehicleListResponse(BaseModel):
-    items: list[VehicleResponse]
+    items: List[VehicleResponse]
     total: int
     page: int
-    size: int
+    limit: int
     pages: int

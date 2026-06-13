@@ -11,7 +11,7 @@ from app.services.vehicle_service import get_vehicle_by_id
 from typing import Optional
 
 
-router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
+router = APIRouter()
 
 
 @router.get("")
