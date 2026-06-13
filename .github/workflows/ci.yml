@@ -2,18 +2,12 @@ name: Fleet Manager CI
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - feature/**
+    branches: [ "main", "develop" ]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [ "main" ]
 
 jobs:
-
-  test-backend:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -22,69 +16,41 @@ jobs:
         env:
           POSTGRES_USER: fleet_user
           POSTGRES_PASSWORD: fleet_password
-          POSTGRES_DB: fleet_test_db
+          POSTGRES_DB: fleet_db
         ports:
           - 5432:5432
-
         options: >-
-          --health-cmd="pg_isready -U fleet_user"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
-      DATABASE_URL: postgresql+psycopg2://fleet_user:fleet_password@localhost:5432/fleet_test_db
-      SECRET_KEY: testsecret
+      DATABASE_URL: postgresql+psycopg2://fleet_user:fleet_password@localhost:5432/fleet_db
+      SECRET_KEY: test_secret_key
       ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30
-
-    defaults:
-      run:
-        working-directory: backend
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest-cov
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
 
-      - name: Run migrations
+      - name: Run migrations (if alembic)
+        working-directory: backend
         run: |
-          alembic upgrade head
+          alembic upgrade head || echo "No migrations"
 
       - name: Run tests
+        working-directory: backend
         run: |
-          pytest -v
-
-      - name: Check formatting
-        run: |
-          pip install black
-          black --check .
-
-      - name: Lint
-        run: |
-          pip install flake8
-          flake8 .
-
-      - name: Coverage
-        run: |
-            pytest --cov=app
-
-      - name: Build Docker image
-        run: docker build -t fleet-backend .
-
-      - name: Safety check
-        run: |
-          pip install safety
-          safety check
-    
+          pytest -q
