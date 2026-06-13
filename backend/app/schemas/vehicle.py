@@ -1,11 +1,23 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from enum import Enum
 from datetime import date
+from typing import Optional, List
+
+from pydantic import BaseModel, ConfigDict
 
 
-# =========================
-# VEHICLE CREATE
-# =========================
+class VehicleStatus(str, Enum):
+    active = "active"
+    maintenance = "maintenance"
+    out_of_service = "out_of_service"
+
+
+class FuelType(str, Enum):
+    essence = "essence"
+    diesel = "diesel"
+    electric = "electric"
+    hybrid = "hybrid"
+
+
 class VehicleCreate(BaseModel):
     name: str
     plate_number: str
@@ -17,42 +29,15 @@ class VehicleCreate(BaseModel):
     vin_number: Optional[str] = None
     mileage: int = 0
 
-    fuel_type: Optional[str] = None
-    transmission: Optional[str] = None
-    engine: Optional[str] = None
-    engine_capacity: Optional[int] = None
+    fuel_type: Optional[FuelType] = None
 
     registration_date: Optional[date] = None
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
-    status: str = "active"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "BMW X5",
-                "plate_number": "AA-123-BB",
-                "brand": "BMW",
-                "model": "X5",
-                "year": 2024,
-                "vin_number": "WBA123456789",
-                "mileage": 120000,
-                "fuel_type": "diesel",
-                "transmission": "automatic",
-                "engine": "3.0L",
-                "engine_capacity": 3000,
-                "registration_date": "2024-01-01",
-                "insurance_expiry_date": "2025-01-01",
-                "technical_inspection_expiry_date": "2025-06-01",
-                "status": "active"
-            }
-        }
+    status: VehicleStatus = VehicleStatus.active
 
 
-# =========================
-# VEHICLE UPDATE
-# =========================
 class VehicleUpdate(BaseModel):
     name: Optional[str] = None
     plate_number: Optional[str] = None
@@ -64,81 +49,39 @@ class VehicleUpdate(BaseModel):
     vin_number: Optional[str] = None
     mileage: Optional[int] = None
 
-    fuel_type: Optional[str] = None
-    transmission: Optional[str] = None
-    engine: Optional[str] = None
-    engine_capacity: Optional[int] = None
+    fuel_type: Optional[FuelType] = None
 
     registration_date: Optional[date] = None
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
-    status: Optional[str] = None
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "BMW X5 Updated",
-                "mileage": 130000,
-                "status": "inactive"
-            }
-        }
+    status: Optional[VehicleStatus] = None
 
 
-# =========================
-# VEHICLE RESPONSE
-# =========================
 class VehicleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
     name: str
     plate_number: str
 
-    brand: Optional[str] = None
-    model: Optional[str] = None
-    year: Optional[int] = None
+    brand: Optional[str]
+    model: Optional[str]
+    year: Optional[int]
 
-    vin_number: Optional[str] = None
-    mileage: int = 0
+    vin_number: Optional[str]
+    mileage: int
 
-    fuel_type: Optional[str] = None
-    transmission: Optional[str] = None
-    engine: Optional[str] = None
-    engine_capacity: Optional[int] = None
+    fuel_type: Optional[FuelType]
 
-    registration_date: Optional[date] = None
-    insurance_expiry_date: Optional[date] = None
-    technical_inspection_expiry_date: Optional[date] = None
+    registration_date: Optional[date]
+    insurance_expiry_date: Optional[date]
+    technical_inspection_expiry_date: Optional[date]
 
-    status: str
-
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
-            "example": {
-                "id": 1,
-                "name": "BMW X5",
-                "plate_number": "AA-123-BB",
-                "brand": "BMW",
-                "model": "X5",
-                "year": 2024,
-                "vin_number": "WBA123456789",
-                "mileage": 120000,
-                "fuel_type": "diesel",
-                "transmission": "automatic",
-                "engine": "3.0L",
-                "engine_capacity": 3000,
-                "registration_date": "2024-01-01",
-                "insurance_expiry_date": "2025-01-01",
-                "technical_inspection_expiry_date": "2025-06-01",
-                "status": "active"
-            }
-        }
+    status: VehicleStatus
 
 
-# =========================
-# VEHICLE LIST RESPONSE (PAGINATION)
-# =========================
 class VehicleListResponse(BaseModel):
     items: List[VehicleResponse]
     total: int
