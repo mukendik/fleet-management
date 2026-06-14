@@ -1,7 +1,16 @@
 import client from "../api/client";
 
-export const getVehicles = async () => {
-  const res = await client.get("/vehicles");
+export const getVehicles = async (params = {}) => {
+  const res = await client.get("/vehicles", {
+    params: {
+      page: params.page || 1,
+      limit: params.limit || 10,
+      search: params.search || "",
+      status: params.status || "",
+      brand: params.brand || "",
+    },
+  });
+
   return res.data;
 };
 
