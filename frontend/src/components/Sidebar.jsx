@@ -18,6 +18,7 @@ export default function Sidebar() {
         background: "#0f172a",
         padding: "20px",
         color: "white",
+        height: "100vh",
       }}
     >
       <h2 style={{ color: "white", marginBottom: "20px" }}>
@@ -30,6 +31,11 @@ export default function Sidebar() {
 
       <NavLink to="/vehicles" style={linkStyle}>
         Vehicles
+      </NavLink>
+
+      {/* ✅ NEW MODULE */}
+      <NavLink to="/drivers" style={linkStyle}>
+        Drivers
       </NavLink>
     </div>
   );

@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Vehicles from "./pages/Vehicles";
 import Dashboard from "./pages/Dashboard";
+import Drivers from "./pages/Drivers"; 
 
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -33,6 +34,18 @@ export default function App() {
             <ProtectedRoute>
               <AppLayout>
                 <Vehicles />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅  ROUTE DRIVERS */}
+        <Route
+          path="/drivers"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Drivers />
               </AppLayout>
             </ProtectedRoute>
           }
