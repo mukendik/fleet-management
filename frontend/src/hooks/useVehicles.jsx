@@ -10,24 +10,32 @@ export function useVehicles(navigate) {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const load = async () => {
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+
+  const fetchVehicles = async (params = {}) => {
     try {
-      const data = await getVehicles();
-      setVehicles(data.items);
+      setLoading(true);
+
+      const data = await getVehicles(params);
+
+      setVehicles(data.items || []);
+      setTotal(data.total || 0);
+      setPage(data.page || 1);
+      setPages(data.pages || 1);
     } catch (err) {
+      console.error(err);
       navigate("/login");
+    } finally {
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const create = async (form) => {
     setLoading(true);
     try {
       await createVehicle(form);
-      await load();
     } finally {
       setLoading(false);
     }
@@ -37,7 +45,6 @@ export function useVehicles(navigate) {
     setLoading(true);
     try {
       await updateVehicle(id, form);
-      await load();
     } finally {
       setLoading(false);
     }
@@ -47,7 +54,6 @@ export function useVehicles(navigate) {
     setLoading(true);
     try {
       await deleteVehicle(id);
-      await load();
     } finally {
       setLoading(false);
     }
@@ -56,7 +62,13 @@ export function useVehicles(navigate) {
   return {
     vehicles,
     loading,
-    load,
+
+    total,
+    page,
+    pages,
+
+    fetchVehicles,
+
     create,
     update,
     remove,

@@ -7,37 +7,39 @@ import Dashboard from "./pages/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+import { ToastProvider } from "./components/ui/toast";
+
 export default function App() {
   return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={<Login />} />
+    <ToastProvider>
+      <Routes>
 
-      {/* Protected SaaS */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
+        <Route path="/login" element={<Login />} />
 
-      <Route
-        path="/vehicles"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Vehicles />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* default */}
-      <Route path="*" element={<Login />} />
-    </Routes>
+        <Route
+          path="/vehicles"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Vehicles />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Login />} />
+      </Routes>
+    </ToastProvider>
   );
 }
