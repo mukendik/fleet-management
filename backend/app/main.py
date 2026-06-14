@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,7 +7,11 @@ from app.api.routes import vehicles
 from app.api.routes.auth import router as auth_router
 
 from app.core.database import Base, engine
-from app.core.exceptions import register_exception_handlers
+from app.core.exceptions import (
+    register_exception_handlers,
+    http_exception_handler,
+    generic_exception_handler
+)
 
 
 # ----------------------------
@@ -36,6 +42,8 @@ Core features:
 # EXCEPTION HANDLING
 # ----------------------------
 register_exception_handlers(app)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 
 # ----------------------------
@@ -78,3 +86,4 @@ app.add_middleware(
 # ----------------------------
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(vehicles.router, prefix="/vehicles", tags=["Vehicles"])
+

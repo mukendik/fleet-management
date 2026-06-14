@@ -1,30 +1,48 @@
-from fastapi import Request, FastAPI
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError
-from psycopg2.errors import UniqueViolation
 
 
-def register_exception_handlers(app: FastAPI):
-
-    @app.exception_handler(IntegrityError)
-    async def integrity_error_handler(
-        request: Request,
-        exc: IntegrityError
-    ):
-
-        orig = getattr(exc, "orig", None)
-
-        if isinstance(orig, UniqueViolation):
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "detail": "Resource already exists"
-                }
-            )
-
-        return JSONResponse(
-            status_code=500,
-            content={
-                "detail": "Database error"
+# -----------------------------
+# STANDARD RESPONSE
+# -----------------------------
+def error_response(status_code: int, message: str, code: str = None):
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "success": False,
+            "error": {
+                "message": message,
+                "code": code,
             }
-        )
+        }
+    )
+
+
+# -----------------------------
+# HTTP EXCEPTION
+# -----------------------------
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return error_response(
+        status_code=exc.status_code,
+        message=str(exc.detail),
+        code="HTTP_ERROR"
+    )
+
+
+# -----------------------------
+# GENERIC EXCEPTION
+# -----------------------------
+async def generic_exception_handler(request: Request, exc: Exception):
+    return error_response(
+        status_code=500,
+        message="Internal server error",
+        code="SERVER_ERROR"
+    )
+
+
+# -----------------------------
+# REGISTER FUNCTION (IMPORTANT)
+# -----------------------------
+def register_exception_handlers(app):
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)

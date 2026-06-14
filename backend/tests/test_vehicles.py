@@ -2,16 +2,17 @@ from uuid import uuid4
 
 def create_vehicle(client, token, name="BMW X5", plate=None):
     if plate is None:
-        plate = f"AA-{uuid4()}"
+        plate = f"AA-{uuid4().hex[:6].upper()}"
 
     return client.post(
         "/vehicles",
         json={
-            "name": name,
+            "name": "BMW X5",
             "plate_number": plate,
             "brand": "BMW",
             "model": "X5",
             "year": 2024,
+            "fuel_type": "diesel",
             "status": "active"
         },
         headers={"Authorization": f"Bearer {token}"}
@@ -28,6 +29,7 @@ def test_create_vehicle(client, manager_token):
 def test_vehicle_detail(client, manager_token):
     created = create_vehicle(client, manager_token)
     
+    print("########### VEHICLE ############### =")
     print(created.json())
 
     vehicle_id = created.json()["id"]

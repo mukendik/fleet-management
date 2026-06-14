@@ -1,90 +1,110 @@
-from enum import Enum
+from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import date
-from typing import Optional, List
+from enum import Enum
 
-from pydantic import BaseModel, ConfigDict
 
+# ----------------------
+# ENUMS
+# ----------------------
 
 class VehicleStatus(str, Enum):
     active = "active"
+    inactive = "inactive"
     maintenance = "maintenance"
-    out_of_service = "out_of_service"
 
 
 class FuelType(str, Enum):
-    essence = "essence"
     diesel = "diesel"
+    petrol = "petrol"
     electric = "electric"
     hybrid = "hybrid"
 
 
-class VehicleCreate(BaseModel):
-    name: str
-    plate_number: str
+class TransmissionType(str, Enum):
+    manual = "manual"
+    automatic = "automatic"
 
-    brand: Optional[str] = None
-    model: Optional[str] = None
-    year: Optional[int] = None
 
-    vin_number: Optional[str] = None
+# ----------------------
+# BASE
+# ----------------------
+
+class VehicleBase(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+
+    plate_number: str = Field(
+        ...,
+        min_length=2,
+        max_length=50
+    )
+
+    brand: str
+    model: str
+
+    year: int = Field(..., ge=1900, le=2100)
+
     mileage: int = 0
 
-    fuel_type: Optional[FuelType] = None
+    fuel_type: FuelType
+
+    transmission: Optional[TransmissionType] = None
+
+    status: VehicleStatus = VehicleStatus.active
+
+    vin_number: Optional[str] = None
 
     registration_date: Optional[date] = None
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
-    status: VehicleStatus = VehicleStatus.active
 
+# ----------------------
+# CREATE
+# ----------------------
+
+class VehicleCreate(VehicleBase):
+    pass
+
+
+# ----------------------
+# UPDATE
+# ----------------------
 
 class VehicleUpdate(BaseModel):
     name: Optional[str] = None
-    plate_number: Optional[str] = None
+
+    plate_number: Optional[str] = Field(
+        default=None,
+        max_length=50
+    )
 
     brand: Optional[str] = None
     model: Optional[str] = None
-    year: Optional[int] = None
 
-    vin_number: Optional[str] = None
+    year: Optional[int] = None
     mileage: Optional[int] = None
 
     fuel_type: Optional[FuelType] = None
 
+    transmission: Optional[TransmissionType] = None
+
+    status: Optional[VehicleStatus] = None
+
+    vin_number: Optional[str] = None
+
     registration_date: Optional[date] = None
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
-    status: Optional[VehicleStatus] = None
 
+# ----------------------
+# RESPONSE
+# ----------------------
 
-class VehicleResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class VehicleResponse(VehicleBase):
     id: int
+    company_id: int
 
-    name: str
-    plate_number: str
-
-    brand: Optional[str]
-    model: Optional[str]
-    year: Optional[int]
-
-    vin_number: Optional[str]
-    mileage: int
-
-    fuel_type: Optional[FuelType]
-
-    registration_date: Optional[date]
-    insurance_expiry_date: Optional[date]
-    technical_inspection_expiry_date: Optional[date]
-
-    status: VehicleStatus
-
-
-class VehicleListResponse(BaseModel):
-    items: List[VehicleResponse]
-    total: int
-    page: int
-    limit: int
-    pages: int
+    class Config:
+        from_attributes = True

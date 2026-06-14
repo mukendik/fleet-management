@@ -1,69 +1,32 @@
-from typing import Optional
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-)
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
+from typing import Optional
 
-from app.api.deps import (
-    get_db,
-    get_current_user,
-    require_roles,
-)
-
+from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
 from app.models.vehicle import Vehicle
-
-from app.schemas.vehicle import (
-    VehicleCreate,
-    VehicleUpdate,
-    VehicleResponse,
-    VehicleListResponse,
-)
+from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
+from app.services.vehicle_service import get_vehicle_by_id
 
 router = APIRouter()
 
 
-# =========================================================
-# LIST VEHICLES
-# =========================================================
-@router.get(
-    "",
-    response_model=VehicleListResponse
-)
-def get_vehicles(
-    page: int = Query(
-        1,
-        ge=1,
-        description="Page number"
-    ),
-    limit: int = Query(
-        10,
-        ge=1,
-        le=100,
-        description="Items per page"
-    ),
+# ----------------------
+# LIST
+# ----------------------
 
+@router.get("")
+def get_vehicles(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
     search: Optional[str] = None,
     status: Optional[str] = None,
     brand: Optional[str] = None,
-
     db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    ),
-
-    _role=Depends(
-        require_roles(
-            ["admin", "manager"]
-        )
-    )
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
     query = db.query(Vehicle).filter(
         Vehicle.company_id == current_user.company_id
@@ -73,88 +36,74 @@ def get_vehicles(
         query = query.filter(
             or_(
                 Vehicle.name.ilike(f"%{search}%"),
-                Vehicle.plate_number.ilike(f"%{search}%")
+                Vehicle.plate_number.ilike(f"%{search}%"),
+                Vehicle.vin_number.ilike(f"%{search}%")
             )
         )
 
     if status:
-        query = query.filter(
-            Vehicle.status == status
-        )
+        query = query.filter(Vehicle.status == status)
 
     if brand:
-        query = query.filter(
-            Vehicle.brand.ilike(f"%{brand}%")
-        )
+        query = query.filter(Vehicle.brand == brand)
 
     total = query.count()
 
-    vehicles = (
-        query
-        .order_by(Vehicle.id.desc())
-        .offset((page - 1) * limit)
-        .limit(limit)
-        .all()
-    )
+    items = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
-        "items": vehicles,
+        "items": items,
         "total": total,
         "page": page,
         "limit": limit,
-        "pages": (
-            (total + limit - 1) // limit
-        )
+        "pages": (total + limit - 1) // limit
     }
 
 
-# =========================================================
-# CREATE VEHICLE
-# =========================================================
-@router.post(
-    "",
-    response_model=VehicleResponse,
-    status_code=201
-)
+# ----------------------
+# CREATE (FIXED 201 + CLEAN FIELDS)
+# ----------------------
+
+@router.post("", response_model=VehicleResponse, status_code=201)
 def create_vehicle(
     data: VehicleCreate,
-
     db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    ),
-
-    _role=Depends(
-        require_roles(
-            ["admin", "manager"]
-        )
-    )
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
+
+    existing = db.query(Vehicle).filter(
+        Vehicle.plate_number == data.plate_number,
+        Vehicle.company_id == current_user.company_id
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Plate number already exists"
+        )
+
+    vin_number = (
+        data.vin_number.strip()
+        if data.vin_number and data.vin_number.strip()
+        else None
+    )
+
     vehicle = Vehicle(
         name=data.name,
         plate_number=data.plate_number,
-
         brand=data.brand,
         model=data.model,
         year=data.year,
-
-        vin_number=data.vin_number,
         mileage=data.mileage,
-
-        fuel_type=(
-            data.fuel_type.value
-            if data.fuel_type
-            else None
-        ),
-
+        fuel_type=data.fuel_type,
+        transmission=data.transmission,
+        vin_number=vin_number,
         registration_date=data.registration_date,
         insurance_expiry_date=data.insurance_expiry_date,
         technical_inspection_expiry_date=data.technical_inspection_expiry_date,
-
-        status=data.status.value,
-
-        company_id=current_user.company_id,
+        status=data.status,
+        company_id=current_user.company_id
     )
 
     db.add(vehicle)
@@ -170,82 +119,46 @@ def create_vehicle(
 
         raise HTTPException(
             status_code=400,
-            detail="Plate number already exists"
+            detail="Database integrity error"
         )
 
+# ----------------------
+# DETAIL
+# ----------------------
 
-# =========================================================
-# GET VEHICLE DETAIL
-# =========================================================
-@router.get(
-    "/{vehicle_id}",
-    response_model=VehicleResponse
-)
+@router.get("/{vehicle_id}", response_model=VehicleResponse)
 def get_vehicle(
     vehicle_id: int,
-
     db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    ),
-
-    _role=Depends(
-        require_roles(
-            ["admin", "manager"]
-        )
-    )
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
-    vehicle = (
-        db.query(Vehicle)
-        .filter(
-            Vehicle.id == vehicle_id,
-            Vehicle.company_id == current_user.company_id
-        )
-        .first()
-    )
+    vehicle = get_vehicle_by_id(db, vehicle_id, current_user.company_id)
 
     if not vehicle:
-        raise HTTPException(
-            status_code=404,
-            detail="Vehicle not found"
-        )
+        raise HTTPException(status_code=404, detail="Vehicle not found")
 
     return vehicle
 
 
-# =========================================================
-# UPDATE VEHICLE
-# =========================================================
-@router.put(
-    "/{vehicle_id}",
-    response_model=VehicleResponse
-)
+# ----------------------
+# UPDATE
+# ----------------------
+
+@router.put("/{vehicle_id}", response_model=VehicleResponse)
+@router.put("/{vehicle_id}", response_model=VehicleResponse)
 def update_vehicle(
     vehicle_id: int,
-
     data: VehicleUpdate,
-
     db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    ),
-
-    _role=Depends(
-        require_roles(
-            ["admin", "manager"]
-        )
-    )
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
-    vehicle = (
-        db.query(Vehicle)
-        .filter(
-            Vehicle.id == vehicle_id,
-            Vehicle.company_id == current_user.company_id
-        )
-        .first()
-    )
+
+    vehicle = db.query(Vehicle).filter(
+        Vehicle.id == vehicle_id,
+        Vehicle.company_id == current_user.company_id
+    ).first()
 
     if not vehicle:
         raise HTTPException(
@@ -253,16 +166,51 @@ def update_vehicle(
             detail="Vehicle not found"
         )
 
-    update_data = data.model_dump(
-        exclude_unset=True
-    )
+    if data.plate_number:
 
-    for field, value in update_data.items():
+        existing = db.query(Vehicle).filter(
+            Vehicle.plate_number == data.plate_number,
+            Vehicle.company_id == current_user.company_id,
+            Vehicle.id != vehicle_id
+        ).first()
 
-        if hasattr(value, "value"):
-            value = value.value
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Plate number already exists"
+            )
 
-        setattr(vehicle, field, value)
+        vehicle.plate_number = data.plate_number
+
+    update_fields = [
+        "name",
+        "brand",
+        "model",
+        "year",
+        "mileage",
+        "fuel_type",
+        "transmission",
+        "status",
+        "registration_date",
+        "insurance_expiry_date",
+        "technical_inspection_expiry_date"
+    ]
+
+    for field in update_fields:
+        value = getattr(data, field)
+
+        if value is not None:
+            setattr(vehicle, field, value)
+
+    if data.vin_number is not None:
+
+        vin_number = (
+            data.vin_number.strip()
+            if data.vin_number.strip()
+            else None
+        )
+
+        vehicle.vin_number = vin_number
 
     try:
         db.commit()
@@ -275,47 +223,31 @@ def update_vehicle(
 
         raise HTTPException(
             status_code=400,
-            detail="Plate number already exists"
+            detail="VIN number already exists"
         )
 
 
-# =========================================================
-# DELETE VEHICLE
-# =========================================================
+# ----------------------
+# DELETE
+# ----------------------
+
 @router.delete("/{vehicle_id}")
 def delete_vehicle(
     vehicle_id: int,
-
     db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    ),
-
-    _role=Depends(
-        require_roles(
-            ["admin", "manager"]
-        )
-    )
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
-    vehicle = (
-        db.query(Vehicle)
-        .filter(
-            Vehicle.id == vehicle_id,
-            Vehicle.company_id == current_user.company_id
-        )
-        .first()
-    )
+
+    vehicle = db.query(Vehicle).filter(
+        Vehicle.id == vehicle_id,
+        Vehicle.company_id == current_user.company_id
+    ).first()
 
     if not vehicle:
-        raise HTTPException(
-            status_code=404,
-            detail="Vehicle not found"
-        )
+        raise HTTPException(status_code=404, detail="Vehicle not found")
 
     db.delete(vehicle)
     db.commit()
 
-    return {
-        "message": "Vehicle deleted successfully"
-    }
+    return {"message": "Vehicle deleted successfully"}

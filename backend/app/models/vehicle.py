@@ -17,49 +17,26 @@ class Vehicle(Base):
 
     name = Column(String, nullable=False)
 
-    plate_number = Column(
-        String,
-        nullable=False,
-        unique=True,
-        index=True,
-    )
+    plate_number = Column(String, nullable=False, unique=True, index=True)
 
-    vin_number = Column(
-        String,
-        unique=True,
-        index=True,
-        nullable=True,
-    )
+    vin_number = Column(String, unique=True, index=True, nullable=True)
 
-    company_id = Column(
-        Integer,
-        ForeignKey("companies.id"),
-        index=True,
-    )
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
 
-    brand = Column(String)
-    model = Column(String)
+    brand = Column(String, nullable=False)
+    model = Column(String, nullable=False)
 
-    year = Column(Integer)
-
+    year = Column(Integer, nullable=False)
     mileage = Column(Integer, default=0)
 
-    fuel_type = Column(String)
-
+    fuel_type = Column(String, nullable=False)
+    transmission = Column(String, nullable=True)
     registration_date = Column(Date)
     insurance_expiry_date = Column(Date)
     technical_inspection_expiry_date = Column(Date)
 
-    status = Column(
-        String,
-        default="active",
-        index=True,
-    )
+    status = Column(String, default="active", index=True)
 
     __table_args__ = (
-        Index(
-            "ix_vehicle_company_plate",
-            "company_id",
-            "plate_number",
-        ),
+        Index("ix_vehicle_company_plate", "company_id", "plate_number"),
     )
