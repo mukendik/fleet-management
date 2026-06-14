@@ -22,7 +22,7 @@ const fuelOptions = [
 
 const statusOptions = [
   { value: "active", label: "Actif" },
-  { value: "inactive", label: "Inactif" },
+  { value: "out_of_service", label: "Hors Service" },
   { value: "maintenance", label: "Maintenance" },
 ];
 

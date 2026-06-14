@@ -145,7 +145,7 @@ export default function Vehicles() {
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="maintenance">Maintenance</option>
-          <option value="out_of_service">Out of service</option>
+          <option value="out_of_service">Hors Service</option>
         </select>
 
         <select

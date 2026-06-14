@@ -10,7 +10,7 @@ from enum import Enum
 
 class VehicleStatus(str, Enum):
     active = "active"
-    inactive = "inactive"
+    out_of_service = "out_of_service"
     maintenance = "maintenance"
 
 
