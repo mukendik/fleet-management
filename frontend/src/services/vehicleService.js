@@ -20,8 +20,14 @@ export const createVehicle = async (data) => {
 };
 
 export const updateVehicle = async (id, data) => {
-  const res = await client.put(`/vehicles/${id}`, data);
-  return res.data;
+  try {
+    console.log("PUT PAYLOAD:", data);
+    const res = await client.put(`/vehicles/${id}`, data);
+    return res.data;
+  } catch (err) {
+    console.log("BACKEND ERROR:", err.response?.data);
+    throw err;
+  }
 };
 
 export const deleteVehicle = async (id) => {
