@@ -1,8 +1,11 @@
+from venv import logger
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from typing import Optional
+
 
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
@@ -16,7 +19,6 @@ router = APIRouter()
 # ----------------------
 # LIST
 # ----------------------
-
 @router.get("")
 def get_vehicles(
     page: int = Query(1, ge=1),
@@ -48,7 +50,6 @@ def get_vehicles(
         query = query.filter(Vehicle.brand == brand)
 
     total = query.count()
-
     items = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
@@ -61,9 +62,8 @@ def get_vehicles(
 
 
 # ----------------------
-# CREATE (FIXED 201 + CLEAN FIELDS)
+# CREATE
 # ----------------------
-
 @router.post("", response_model=VehicleResponse, status_code=201)
 def create_vehicle(
     data: VehicleCreate,
@@ -78,16 +78,9 @@ def create_vehicle(
     ).first()
 
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Plate number already exists"
-        )
+        raise HTTPException(status_code=400, detail="Plate number already exists")
 
-    vin_number = (
-        data.vin_number.strip()
-        if data.vin_number and data.vin_number.strip()
-        else None
-    )
+    vin_number = data.vin_number.strip() if data.vin_number else None
 
     vehicle = Vehicle(
         name=data.name,
@@ -111,21 +104,16 @@ def create_vehicle(
     try:
         db.commit()
         db.refresh(vehicle)
-
         return vehicle
 
     except IntegrityError:
         db.rollback()
+        raise HTTPException(status_code=400, detail="Database integrity error")
 
-        raise HTTPException(
-            status_code=400,
-            detail="Database integrity error"
-        )
 
 # ----------------------
 # DETAIL
 # ----------------------
-
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 def get_vehicle(
     vehicle_id: int,
@@ -142,10 +130,8 @@ def get_vehicle(
 
 
 # ----------------------
-# UPDATE
+# UPDATE (FIX CRASH + SAFE ENUM)
 # ----------------------
-
-@router.put("/{vehicle_id}", response_model=VehicleResponse)
 @router.put("/{vehicle_id}", response_model=VehicleResponse)
 def update_vehicle(
     vehicle_id: int,
@@ -161,13 +147,12 @@ def update_vehicle(
     ).first()
 
     if not vehicle:
-        raise HTTPException(
-            status_code=404,
-            detail="Vehicle not found"
-        )
+        raise HTTPException(status_code=404, detail="Vehicle not found")
 
+    # -------------------------
+    # plate number uniqueness
+    # -------------------------
     if data.plate_number:
-
         existing = db.query(Vehicle).filter(
             Vehicle.plate_number == data.plate_number,
             Vehicle.company_id == current_user.company_id,
@@ -182,6 +167,9 @@ def update_vehicle(
 
         vehicle.plate_number = data.plate_number
 
+    # -------------------------
+    # safe field update
+    # -------------------------
     update_fields = [
         "name",
         "brand",
@@ -202,35 +190,30 @@ def update_vehicle(
         if value is not None:
             setattr(vehicle, field, value)
 
+    # -------------------------
+    # SAFE vin handling (FIX CRASH)
+    # -------------------------
     if data.vin_number is not None:
+        vin = data.vin_number.strip()
+        vehicle.vin_number = vin if vin else None
 
-        vin_number = (
-            data.vin_number.strip()
-            if data.vin_number.strip()
-            else None
-        )
-
-        vehicle.vin_number = vin_number
-
+    # -------------------------
+    # DB commit safe
+    # -------------------------
     try:
         db.commit()
         db.refresh(vehicle)
-
         return vehicle
 
-    except IntegrityError:
+    except Exception as e:
         db.rollback()
-
         raise HTTPException(
-            status_code=400,
-            detail="VIN number already exists"
+            status_code=500,
+            detail=f"Update failed: {str(e)}"
         )
-
-
 # ----------------------
 # DELETE
 # ----------------------
-
 @router.delete("/{vehicle_id}")
 def delete_vehicle(
     vehicle_id: int,

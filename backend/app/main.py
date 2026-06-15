@@ -1,35 +1,33 @@
-from http.client import HTTPException
+import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import vehicles
+from app.api.routes import vehicles, drivers
 from app.api.routes.auth import router as auth_router
 
-from app.core.database import Base, engine
-from app.core.exceptions import (
-    register_exception_handlers,
-    http_exception_handler,
-    generic_exception_handler
-)
+from app.core.logging import setup_logging
+from app.core.exceptions import register_exception_handlers
+from app.core.database import engine
+from app.core.exceptions import global_exception_handler
 
 
 # ----------------------------
-# APP INIT (SAAS READY)
+# LOGGING
+# ----------------------------
+setup_logging()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+# ----------------------------
+# APP INIT
 # ----------------------------
 app = FastAPI(
     title="Fleet Manager API",
     version="0.2.0",
     description="""
-Fleet Manager API is a multi-tenant SaaS for vehicle fleet management.
-
-Core features:
-- JWT Authentication (Access + Refresh tokens)
-- Multi-tenant architecture (company isolation)
-- Vehicle lifecycle management (CRUD)
-- Pagination, filtering, search
-- Maintenance tracking (insurance, technical inspection, mileage)
-- SaaS-ready scalable backend
+Fleet Manager API - SaaS multi-tenant for fleet management
 """,
     contact={
         "name": "Ghislain Mukendi",
@@ -39,11 +37,12 @@ Core features:
 
 
 # ----------------------------
-# EXCEPTION HANDLING
+# EXCEPTION HANDLING (CLEAN FIX)
 # ----------------------------
 register_exception_handlers(app)
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(Exception, generic_exception_handler)
+
+app.add_exception_handler(HTTPException, global_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 
 # ----------------------------
@@ -51,12 +50,23 @@ app.add_exception_handler(Exception, generic_exception_handler)
 # ----------------------------
 @app.on_event("startup")
 def startup_event():
-    # ⚠️ en prod -> remplacer par Alembic
-    Base.metadata.create_all(bind=engine)
+    from app.models.base import Base
+    from app.models.company import Company
+    from app.models.user import User
+    from app.models.vehicle import Vehicle
+    from app.models.driver import Driver
+    logger.info("Starting Fleet Manager API...")
+
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database connected & tables created")
+    except Exception as e:
+        logger.exception("Database startup failed")
+        raise e
 
 
 # ----------------------------
-# ROOT ENDPOINT
+# ROOT
 # ----------------------------
 @app.get("/", tags=["Health"])
 def root():
@@ -67,7 +77,7 @@ def root():
 
 
 # ----------------------------
-# CORS CONFIG (SAAS SAFE)
+# CORS
 # ----------------------------
 app.add_middleware(
     CORSMiddleware,
@@ -86,4 +96,4 @@ app.add_middleware(
 # ----------------------------
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(vehicles.router, prefix="/vehicles", tags=["Vehicles"])
-
+app.include_router(drivers.router, prefix="/drivers", tags=["Drivers"])

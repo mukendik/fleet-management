@@ -4,13 +4,13 @@ from datetime import date
 from enum import Enum
 
 
-# ----------------------
-# ENUMS
-# ----------------------
+# ======================
+# ENUMS (ALIGN BACK + FRONT)
+# ======================
 
 class VehicleStatus(str, Enum):
     active = "active"
-    out_of_service = "out_of_service"
+    inactive = "inactive"
     maintenance = "maintenance"
 
 
@@ -26,28 +26,21 @@ class TransmissionType(str, Enum):
     automatic = "automatic"
 
 
-# ----------------------
-# BASE
-# ----------------------
+# ======================
+# BASE MODEL
+# ======================
 
 class VehicleBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
-
-    plate_number: str = Field(
-        ...,
-        min_length=2,
-        max_length=50
-    )
+    plate_number: str = Field(..., min_length=2, max_length=50)
 
     brand: str
     model: str
 
     year: int = Field(..., ge=1900, le=2100)
-
     mileage: int = 0
 
     fuel_type: FuelType
-
     transmission: Optional[TransmissionType] = None
 
     status: VehicleStatus = VehicleStatus.active
@@ -59,34 +52,29 @@ class VehicleBase(BaseModel):
     technical_inspection_expiry_date: Optional[date] = None
 
 
-# ----------------------
+# ======================
 # CREATE
-# ----------------------
+# ======================
 
 class VehicleCreate(VehicleBase):
     pass
 
 
-# ----------------------
-# UPDATE
-# ----------------------
+# ======================
+# UPDATE (IMPORTANT FIX)
+# ======================
 
 class VehicleUpdate(BaseModel):
     name: Optional[str] = None
-
-    plate_number: Optional[str] = Field(
-        default=None,
-        max_length=50
-    )
+    plate_number: Optional[str] = None
 
     brand: Optional[str] = None
     model: Optional[str] = None
 
-    year: Optional[int] = None
+    year: Optional[int] = Field(None, ge=1900, le=2100)
     mileage: Optional[int] = None
 
     fuel_type: Optional[FuelType] = None
-
     transmission: Optional[TransmissionType] = None
 
     status: Optional[VehicleStatus] = None
@@ -98,9 +86,9 @@ class VehicleUpdate(BaseModel):
     technical_inspection_expiry_date: Optional[date] = None
 
 
-# ----------------------
+# ======================
 # RESPONSE
-# ----------------------
+# ======================
 
 class VehicleResponse(VehicleBase):
     id: int

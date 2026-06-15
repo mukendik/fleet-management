@@ -1,11 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, Enum, ForeignKey
-from app.db.base import Base
-import enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from app.models.base import Base
 
-
-class DriverStatus(str, enum.Enum):
-    active = "active"
-    inactive = "inactive"
 
 
 class Driver(Base):
@@ -16,12 +11,10 @@ class Driver(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
 
+    license_number = Column(String, nullable=False)
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
 
-    license_number = Column(String, nullable=False)
-    license_expiry_date = Column(Date, nullable=True)
-
-    status = Column(Enum(DriverStatus), default=DriverStatus.active)
+    status = Column(String, default="active")  # active / inactive / suspended
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
