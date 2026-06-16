@@ -26,14 +26,22 @@ class Vehicle(Base):
     brand = Column(String, nullable=False)
     model = Column(String, nullable=False)
 
-    year = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=True)
     mileage = Column(Integer, default=0)
 
     fuel_type = Column(String, nullable=False)
-    transmission = Column(String, nullable=True)
-    registration_date = Column(Date)
-    insurance_expiry_date = Column(Date)
-    technical_inspection_expiry_date = Column(Date)
+    transmission = Column(
+        String,
+        default="automatic",
+        index=True
+    )
+
+    registration_date = Column(Date, nullable=True)
+    insurance_expiry_date = Column(Date, nullable=True)
+    technical_inspection_expiry_date = Column(
+        Date,
+        nullable=True
+    )
 
     status = Column(String, default="active", index=True)
 

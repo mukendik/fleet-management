@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import date
 from enum import Enum
@@ -16,9 +16,9 @@ class VehicleStatus(str, Enum):
 
 class FuelType(str, Enum):
     diesel = "diesel"
-    petrol = "petrol"
-    electric = "electric"
-    hybrid = "hybrid"
+    essence = "essence"
+    electric = "electrique"
+    hybrid = "hybride"
 
 
 class TransmissionType(str, Enum):
@@ -37,10 +37,15 @@ class VehicleBase(BaseModel):
     brand: str
     model: str
 
-    year: int = Field(..., ge=1900, le=2100)
-    mileage: int = 0
+    year: Optional[int] = Field(None, ge=1900, le=2100)
 
-    fuel_type: FuelType
+    mileage: Optional[int] = Field(
+        default=0,
+        ge=0
+    )
+
+    fuel_type: Optional[FuelType] = None
+
     transmission: Optional[TransmissionType] = None
 
     status: VehicleStatus = VehicleStatus.active
@@ -51,6 +56,12 @@ class VehicleBase(BaseModel):
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
 
+    @field_validator("plate_number")
+    @classmethod
+    def validate_plate(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Plate number cannot be empty")
+        return v.strip().upper()
 
 # ======================
 # CREATE
@@ -65,14 +76,15 @@ class VehicleCreate(VehicleBase):
 # ======================
 
 class VehicleUpdate(BaseModel):
-    name: Optional[str] = None
-    plate_number: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    plate_number: Optional[str] = Field(None, min_length=2, max_length=50)
 
     brand: Optional[str] = None
     model: Optional[str] = None
 
     year: Optional[int] = Field(None, ge=1900, le=2100)
-    mileage: Optional[int] = None
+
+    mileage: int = 0
 
     fuel_type: Optional[FuelType] = None
     transmission: Optional[TransmissionType] = None
@@ -84,6 +96,7 @@ class VehicleUpdate(BaseModel):
     registration_date: Optional[date] = None
     insurance_expiry_date: Optional[date] = None
     technical_inspection_expiry_date: Optional[date] = None
+
 
 
 # ======================

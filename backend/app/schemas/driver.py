@@ -48,3 +48,14 @@ class DriverResponse(DriverBase):
 
     class Config:
         from_attributes = True
+
+
+class DriverListResponse(BaseModel):
+    items: list[DriverResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+
+    class Config:
+        from_attributes = True

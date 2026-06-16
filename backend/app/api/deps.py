@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from app.core.security import oauth2_scheme
-from jose import JWTError, jwt
+from jose import JWTError, jwt, ExpiredSignatureError
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.core.config import settings
@@ -8,13 +8,10 @@ from app.db.session import get_db
 from app.models.user import User, UserRole
 
 
-
-
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -27,30 +24,37 @@ def get_current_user(
             algorithms=[settings.ALGORITHM]
         )
 
-        # IMPORTANT
         token_type = payload.get("type")
 
         if token_type != "access":
             raise credentials_exception
 
-        email: str = payload.get("sub")
+        email = payload.get("sub")
 
-        if email is None:
+        if not email:
             raise credentials_exception
 
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token expired"
+        )
+
     except JWTError:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
 
     user = db.query(User).filter(
         User.email == email
     ).first()
 
-    if user is None:
+    if not user:
         raise credentials_exception
-    
+
     return user
 
-from fastapi import Depends, HTTPException, status
 
 def require_roles(allowed_roles: list[str]):
 

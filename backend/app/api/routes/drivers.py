@@ -6,7 +6,7 @@ from typing import Optional
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
 from app.models.driver import Driver
-from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse
+from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse, DriverListResponse
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ router = APIRouter()
 # ----------------------
 # LIST DRIVERS
 # ----------------------
-@router.get("", response_model=dict)
+@router.get("/", response_model=DriverListResponse)
 def get_drivers(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
@@ -31,9 +31,9 @@ def get_drivers(
 
     if search:
         query = query.filter(
-            Driver.first_name.ilike(f"%{search}%") |
-            Driver.last_name.ilike(f"%{search}%") |
-            Driver.license_number.ilike(f"%{search}%")
+            (Driver.first_name.ilike(f"%{search}%")) |
+            (Driver.last_name.ilike(f"%{search}%")) |
+            (Driver.license_number.ilike(f"%{search}%"))
         )
 
     if status:
@@ -43,19 +43,19 @@ def get_drivers(
 
     items = query.offset((page - 1) * limit).limit(limit).all()
 
-    return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "pages": (total + limit - 1) // limit
-    }
+    return DriverListResponse(
+        items=items,
+        total=total,
+        page=page,
+        limit=limit,
+        pages=(total + limit - 1) // limit
+    )
 
 
 # ----------------------
 # CREATE DRIVER
 # ----------------------
-@router.post("", response_model=DriverResponse, status_code=201)
+@router.post("/", response_model=DriverResponse, status_code=201)
 def create_driver(
     data: DriverCreate,
     db: Session = Depends(get_db),
@@ -157,15 +157,7 @@ def update_driver(
 
         driver.license_number = data.license_number
 
-    update_fields = [
-        "first_name",
-        "last_name",
-        "phone",
-        "email",
-        "status"
-    ]
-
-    for field in update_fields:
+    for field in ["first_name", "last_name", "phone", "email", "status"]:
         value = getattr(data, field, None)
         if value is not None:
             setattr(driver, field, value)
