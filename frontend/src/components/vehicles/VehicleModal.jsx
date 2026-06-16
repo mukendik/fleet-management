@@ -8,16 +8,16 @@ const emptyForm = {
   plate_number: "",
   vin_number: "",
   mileage: 0,
-  fuel_type: "petrol",
+  fuel_type: "essence",
   status: "active",
-  transmission: "",
+  transmission: "automatic",
 };
 
 const fuelOptions = [
   { value: "diesel", label: "Diesel" },
-  { value: "petrol", label: "Essence" },
-  { value: "electric", label: "Électrique" },
-  { value: "hybrid", label: "Hybride" },
+  { value: "essence", label: "Essence" },
+  { value: "electrique", label: "Électrique" },
+  { value: "hybride", label: "Hybride" },
 ];
 
 const statusOptions = [
@@ -51,7 +51,7 @@ export default function VehicleModal({
         vin_number: initialData.vin_number || "",
         mileage: initialData.mileage ?? 0,
         year: initialData.year ? String(initialData.year) : "",
-        fuel_type: initialData.fuel_type || "petrol",
+        fuel_type: initialData.fuel_type || "essence",
         status: initialData.status || "active",
         transmission: initialData.transmission || "",
       });
@@ -72,7 +72,7 @@ export default function VehicleModal({
     brand: form.brand.trim(),
     model: form.model.trim(),
     plate_number: form.plate_number.trim(),
-    year: form.year ? Number(form.year) : null,
+    year: form.year ? parseInt(form.year) : null,
     mileage: form.mileage ? Number(form.mileage) : 0,
 
     fuel_type: form.fuel_type,
