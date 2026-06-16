@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import DriverModal from "../components/drivers/DriverModal";
 import DriverTable from "../components/drivers/DriverTable";
 
-import * as driverService from "../services/driverService";
+//import * as driverService from "../services/driverService";
+import { driverService } from "../services/driverService";
 
 export default function DriverPage() {
   const [drivers, setDrivers] = useState([]);
