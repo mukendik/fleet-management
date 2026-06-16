@@ -14,7 +14,7 @@ router = APIRouter()
 # ----------------------
 # LIST DRIVERS
 # ----------------------
-@router.get("/", response_model=DriverListResponse)
+@router.get("", response_model=DriverListResponse)
 def get_drivers(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
@@ -55,7 +55,7 @@ def get_drivers(
 # ----------------------
 # CREATE DRIVER
 # ----------------------
-@router.post("/", response_model=DriverResponse, status_code=201)
+@router.post("", response_model=DriverResponse, status_code=201)
 def create_driver(
     data: DriverCreate,
     db: Session = Depends(get_db),
@@ -71,7 +71,11 @@ def create_driver(
     if existing:
         raise HTTPException(
             status_code=400,
-            detail="Driver license already exists"
+            detail={
+                "code": "DRIVER_LICENSE_EXISTS",
+                "message": "This license number is already used",
+                "field": "license_number"
+            }
         )
 
     driver = Driver(
@@ -84,9 +88,8 @@ def create_driver(
         company_id=current_user.company_id
     )
 
-    db.add(driver)
-
     try:
+        db.add(driver)
         db.commit()
         db.refresh(driver)
         return driver
@@ -95,9 +98,11 @@ def create_driver(
         db.rollback()
         raise HTTPException(
             status_code=400,
-            detail="Database integrity error"
+            detail={
+                "code": "DATABASE_ERROR",
+                "message": "Integrity constraint violation",
+            }
         )
-
 
 # ----------------------
 # GET DRIVER

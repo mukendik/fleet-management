@@ -76,13 +76,17 @@ async def integrity_exception_handler(
 # -------------------------
 # GLOBAL ERROR (500)
 # -------------------------
-async def global_exception_handler(
-    request: Request,
-    exc: Exception
-):
-    logger.exception(
-        f"Unhandled error on {request.url.path}"
-    )
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error on {request.url.path}")
+
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": "HTTP_ERROR",
+                "message": exc.detail,
+            },
+        )
 
     return JSONResponse(
         status_code=500,

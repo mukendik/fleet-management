@@ -41,8 +41,8 @@ Fleet Manager API - SaaS multi-tenant for fleet management
 # ----------------------------
 register_exception_handlers(app)
 
-#app.add_exception_handler(HTTPException, global_exception_handler)
-#app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(HTTPException, global_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 
 # ----------------------------
