@@ -1,11 +1,13 @@
 import api from "./api";
 
-export const getDrivers = (params) => api.get("/drivers", { params });
+export const driverService = {
+  create: (data) => api.post("/drivers", data),
 
-export const createDriver = (data) => api.post("/drivers", data);
+  getAll: (params) => api.get("/drivers", { params }),
 
-export const updateDriver = (id, data) =>
-  api.put(`/drivers/${id}`, data);
+  getById: (id) => api.get(`/drivers/${id}`),
 
-export const deleteDriver = (id) =>
-  api.delete(`/drivers/${id}`);
+  update: (id, data) => api.put(`/drivers/${id}`, data),
+
+  delete: (id) => api.delete(`/drivers/${id}`),
+};
