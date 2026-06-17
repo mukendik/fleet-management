@@ -27,7 +27,71 @@ app = FastAPI(
     title="Fleet Manager API",
     version="0.2.0",
     description="""
-Fleet Manager API - SaaS multi-tenant for fleet management
+# 🚗 Fleet Manager API
+
+SaaS multi-tenant de gestion de flotte de véhicules et chauffeurs.
+
+---
+
+## 📦 Fonctionnalités principales
+
+### 🔐 Authentification
+- JWT Access / Refresh tokens
+- Protection des routes via rôles (admin / manager)
+- Sécurisation OAuth2 Password Flow
+
+---
+
+### 🚗 Vehicles
+- CRUD complet des véhicules
+- Filtrage par statut, marque, recherche
+- Pagination (page / limit)
+- Gestion des VIN, immatriculation, kilométrage
+- Statuts : active / maintenance / inactive
+
+---
+
+### 👨‍✈️ Drivers
+- CRUD complet des chauffeurs
+- Recherche (nom, permis, email)
+- Filtrage par statut
+- Unicité du numéro de permis par entreprise
+- Gestion des dates d’expiration de permis
+
+---
+
+### 🏢 Multi-tenancy
+- Isolation des données par `company_id`
+- Chaque utilisateur voit uniquement sa flotte
+
+---
+
+### 📊 Pagination & Filtering
+- `page` / `limit` sur toutes les listes
+- `search` textuel
+- filtres dynamiques (status, brand, etc.)
+
+---
+
+### ⚙️ Architecture
+- FastAPI
+- SQLAlchemy ORM
+- PostgreSQL / SQLite (dev)
+- Pydantic schemas
+- Dependency injection propre
+
+---
+
+## 🧪 Environnement
+- Base URL: `/`
+- Auth endpoint: `/auth/login`
+- Vehicles: `/vehicles`
+- Drivers: `/drivers`
+
+---
+
+## 👨‍💻 Contact
+Ghislain Mukendi — contact@qualitydevzone.fr
 """,
     contact={
         "name": "Ghislain Mukendi",
