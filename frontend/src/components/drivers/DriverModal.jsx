@@ -52,56 +52,81 @@ export default function DriverModal({
   const handleSubmit = () => {
     onSave({
       ...form,
-      license_expiry_date: form.license_expiry_date || null,
+      license_expiry_date:
+        form.license_expiry_date || null,
     });
   };
 
   return (
     <div style={styles.overlay}>
       <div style={styles.modal}>
-        <h2>{initialData ? "Modifier chauffeur" : "Créer chauffeur"}</h2>
+        <h2 style={styles.title}>
+          {initialData ? "Modifier chauffeur" : "Créer chauffeur"}
+        </h2>
 
         <input
+          style={styles.input}
           placeholder="Prénom"
           value={form.first_name}
-          onChange={(e) => handleChange("first_name", e.target.value)}
+          onChange={(e) =>
+            handleChange("first_name", e.target.value)
+          }
         />
 
         <input
+          style={styles.input}
           placeholder="Nom"
           value={form.last_name}
-          onChange={(e) => handleChange("last_name", e.target.value)}
+          onChange={(e) =>
+            handleChange("last_name", e.target.value)
+          }
         />
 
         <input
+          style={styles.input}
           placeholder="Téléphone"
           value={form.phone}
-          onChange={(e) => handleChange("phone", e.target.value)}
+          onChange={(e) =>
+            handleChange("phone", e.target.value)
+          }
         />
 
         <input
+          style={styles.input}
           placeholder="Email"
           value={form.email}
-          onChange={(e) => handleChange("email", e.target.value)}
+          onChange={(e) =>
+            handleChange("email", e.target.value)
+          }
         />
 
         <input
+          style={styles.input}
           placeholder="Numéro permis"
           value={form.license_number}
-          onChange={(e) => handleChange("license_number", e.target.value)}
+          onChange={(e) =>
+            handleChange("license_number", e.target.value)
+          }
         />
 
         <input
+          style={styles.input}
           type="date"
           value={form.license_expiry_date || ""}
           onChange={(e) =>
-            handleChange("license_expiry_date", e.target.value)
+            handleChange(
+              "license_expiry_date",
+              e.target.value
+            )
           }
         />
 
         <select
+          style={styles.select}
           value={form.status}
-          onChange={(e) => handleChange("status", e.target.value)}
+          onChange={(e) =>
+            handleChange("status", e.target.value)
+          }
         >
           {statusOptions.map((s) => (
             <option key={s.value} value={s.value}>
@@ -110,13 +135,24 @@ export default function DriverModal({
           ))}
         </select>
 
-        <div style={{ marginTop: 10 }}>
-          <button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving..." : initialData ? "Mettre à jour" : "Créer"}
+        <div style={styles.actions}>
+          <button
+            style={styles.saveBtn}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading
+              ? "Saving..."
+              : initialData
+              ? "Update"
+              : "Create"}
           </button>
 
-          <button onClick={onClose} style={{ marginLeft: 10 }}>
-            Annuler
+          <button
+            style={styles.cancelBtn}
+            onClick={onClose}
+          >
+            Cancel
           </button>
         </div>
       </div>
@@ -127,22 +163,68 @@ export default function DriverModal({
 const styles = {
   overlay: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    inset: 0,
     background: "rgba(0,0,0,0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
   },
+
   modal: {
     background: "white",
     padding: 20,
     width: 420,
-    borderRadius: 8,
+    borderRadius: 10,
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+  },
+
+  title: {
+    marginBottom: 10,
+  },
+
+  input: {
+    padding: "10px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+  },
+
+  select: {
+    padding: "10px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    fontSize: "14px",
+    background: "white",
+  },
+
+  actions: {
+    marginTop: 10,
+    display: "flex",
+    gap: 10,
+  },
+
+  saveBtn: {
+    flex: 1,
+    padding: "10px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#2563eb",
+    color: "white",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+
+  cancelBtn: {
+    flex: 1,
+    padding: "10px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#e5e7eb",
+    cursor: "pointer",
+    fontSize: "14px",
   },
 };

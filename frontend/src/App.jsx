@@ -39,7 +39,6 @@ export default function App() {
           }
         />
 
-        {/* ✅  ROUTE DRIVERS */}
         <Route
           path="/drivers"
           element={
