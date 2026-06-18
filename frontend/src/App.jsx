@@ -4,6 +4,8 @@ import Login from "./pages/Login";
 import Vehicles from "./pages/Vehicles";
 import Dashboard from "./pages/Dashboard";
 import Drivers from "./pages/Drivers"; 
+import VehicleDetail from "./pages/VehicleDetail";
+import AssignmentsPage from "./pages/AssignmentsPage";
 
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -49,6 +51,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/vehicles/:id/assignments" element={<AssignmentsPage />} />
 
         <Route path="*" element={<Login />} />
       </Routes>

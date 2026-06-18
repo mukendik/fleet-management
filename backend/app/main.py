@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import vehicles, drivers
+from app.api.routes import vehicles, drivers, assignments
 from app.api.routes.auth import router as auth_router
 
 from app.core.logging import setup_logging
@@ -161,3 +161,8 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(vehicles.router, prefix="/vehicles", tags=["Vehicles"])
 app.include_router(drivers.router, prefix="/drivers", tags=["Drivers"])
+app.include_router(
+    assignments.router,
+    prefix="/assignments",
+    tags=["Assignments"]
+)

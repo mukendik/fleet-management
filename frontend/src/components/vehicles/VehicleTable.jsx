@@ -121,6 +121,12 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
                   <button style={deleteBtn} onClick={() => onDelete(v.id)}>
                     Delete
                   </button>
+                  <button
+                    style={{ background: "#111827", color: "white", marginLeft: 6 }}
+                    onClick={() => navigate(`/vehicles/${v.id}/assignments`)}
+                  >
+                    Assign
+                  </button>
                 </div>
               </td>
             </tr>
