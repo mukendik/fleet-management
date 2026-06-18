@@ -51,9 +51,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route path="/vehicles/:id/assignments" element={<AssignmentsPage />} />
-
+        <Route
+          path="/vehicles/:id/assignments"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <AssignmentsPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Login />} />
       </Routes>
     </ToastProvider>

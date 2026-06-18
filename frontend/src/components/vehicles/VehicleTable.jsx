@@ -1,4 +1,9 @@
+import { useNavigate } from "react-router-dom";
+
 export default function VehicleTable({ data, onEdit, onDelete }) {
+
+  const navigate = useNavigate();
+
   const containerStyle = {
     marginTop: "20px",
     background: "#ffffff",
@@ -122,7 +127,15 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
                     Delete
                   </button>
                   <button
-                    style={{ background: "#111827", color: "white", marginLeft: 6 }}
+                    style={{
+                      background: "#111827",
+                      color: "white",
+                      marginLeft: 6,
+                      cursor: "pointer",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "6px 10px"
+                    }}
                     onClick={() => navigate(`/vehicles/${v.id}/assignments`)}
                   >
                     Assign
