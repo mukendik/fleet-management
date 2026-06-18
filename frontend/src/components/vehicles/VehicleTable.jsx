@@ -136,7 +136,11 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
                       borderRadius: "8px",
                       padding: "6px 10px"
                     }}
-                    onClick={() => navigate(`/vehicles/${v.id}/assignments`)}
+                    onClick={() =>
+                    navigate(`/vehicles/${v.id}/assignments`, {
+                      state: { vehicle: v }
+                    })
+                  }
                   >
                     Assign
                   </button>
