@@ -62,19 +62,21 @@ export default function AssignmentsPage() {
   // ASSIGN DRIVER
   // -------------------------
   const handleAssign = async () => {
-    try {
-      await assignmentService.create({
-        vehicle_id: Number(id),
-        driver_id: Number(selectedDriver),
-      });
+  try {
+    if (!selectedDriver) return; 
 
-      setShowModal(false);
-      setSelectedDriver("");
-      load();
-    } catch (err) {
-      console.error("Assign error:", err);
-    }
-  };
+    await assignmentService.create({
+      vehicle_id: Number(id),
+      driver_id: Number(selectedDriver),
+    });
+
+    setShowModal(false);
+    setSelectedDriver("");
+    load();
+  } catch (err) {
+    console.error("Assign error:", err);
+  }
+};
 
   // -------------------------
   // SAFE DRIVER RENDER
@@ -150,7 +152,7 @@ export default function AssignmentsPage() {
         )}
 
         <button onClick={() => setShowModal(true)}>
-          {current ? "Change Driver" : "Assign Driver"}
+          {current?.driver ?  "Change Driver" : "Assign Driver"}
         </button>
       </div>
 
@@ -171,7 +173,7 @@ export default function AssignmentsPage() {
             >
               {h?.driver ? (
                 <strong>
-                  {h.driver.first_name} {h.driver.last_name}
+                  {h?.driver?.first_name} {h?.driver?.last_name}
                 </strong>
               ) : (
                 <strong>Unknown driver</strong>

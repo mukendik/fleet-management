@@ -44,7 +44,8 @@ def assign_vehicle(
         vehicle_id=data.vehicle_id,
         driver_id=data.driver_id,
         company_id=current_user.company_id,
-        is_active=True
+        is_active=True,
+        assigned_at=datetime.utcnow()
     )
 
     db.add(assignment)
@@ -55,13 +56,12 @@ def assign_vehicle(
 
 #current driver of a vehicle
 @router.get("/vehicle/{vehicle_id}/current")
+@router.get("/vehicle/{vehicle_id}/current")
 def get_current_driver(vehicle_id: int, db: Session = Depends(get_db)):
 
     assignment = (
         db.query(VehicleAssignment)
-        .options(
-            joinedload(VehicleAssignment.driver)
-        )
+        .options(joinedload(VehicleAssignment.driver))
         .filter(
             VehicleAssignment.vehicle_id == vehicle_id,
             VehicleAssignment.is_active == True
@@ -78,9 +78,13 @@ def get_current_driver(vehicle_id: int, db: Session = Depends(get_db)):
 @router.get("/vehicle/{vehicle_id}/history")
 def vehicle_history(vehicle_id: int, db: Session = Depends(get_db)):
 
-    return db.query(VehicleAssignment).filter(
-        VehicleAssignment.vehicle_id == vehicle_id
-    ).order_by(VehicleAssignment.assigned_at.desc()).all()
+    return (
+        db.query(VehicleAssignment)
+        .options(joinedload(VehicleAssignment.driver))
+        .filter(VehicleAssignment.vehicle_id == vehicle_id)
+        .order_by(VehicleAssignment.assigned_at.desc())
+        .all()
+    )
 
 #historique driver
 @router.get("/vehicle/{vehicle_id}/history")
