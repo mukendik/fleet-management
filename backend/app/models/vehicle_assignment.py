@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, ForeignKey, Boolean, DateTime, Index
+from sqlalchemy import Column, Integer, ForeignKey, Boolean, DateTime, Index, relationship
 from app.models.base import Base
 
 
@@ -20,3 +20,6 @@ class VehicleAssignment(Base):
     __table_args__ = (
         Index("ix_vehicle_driver_active", "vehicle_id", "driver_id", "is_active"),
     )
+
+driver = relationship("Driver")
+vehicle = relationship("Vehicle")

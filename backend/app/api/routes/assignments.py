@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 from datetime import datetime
 
 from app.api.deps import get_db, get_current_user, require_roles
@@ -56,13 +57,20 @@ def assign_vehicle(
 @router.get("/vehicle/{vehicle_id}/current")
 def get_current_driver(vehicle_id: int, db: Session = Depends(get_db)):
 
-    assignment = db.query(VehicleAssignment).filter(
-        VehicleAssignment.vehicle_id == vehicle_id,
-        VehicleAssignment.is_active == True
-    ).first()
+    assignment = (
+        db.query(VehicleAssignment)
+        .options(
+            joinedload(VehicleAssignment.driver)
+        )
+        .filter(
+            VehicleAssignment.vehicle_id == vehicle_id,
+            VehicleAssignment.is_active == True
+        )
+        .first()
+    )
 
     if not assignment:
-        return {"driver": None}
+        return None
 
     return assignment
 
@@ -75,9 +83,15 @@ def vehicle_history(vehicle_id: int, db: Session = Depends(get_db)):
     ).order_by(VehicleAssignment.assigned_at.desc()).all()
 
 #historique driver
-@router.get("/driver/{driver_id}/history")
-def driver_history(driver_id: int, db: Session = Depends(get_db)):
+@router.get("/vehicle/{vehicle_id}/history")
+def vehicle_history(vehicle_id: int, db: Session = Depends(get_db)):
 
-    return db.query(VehicleAssignment).filter(
-        VehicleAssignment.driver_id == driver_id
-    ).order_by(VehicleAssignment.assigned_at.desc()).all()
+    history = (
+        db.query(VehicleAssignment)
+        .options(joinedload(VehicleAssignment.driver))
+        .filter(VehicleAssignment.vehicle_id == vehicle_id)
+        .order_by(VehicleAssignment.assigned_at.desc())
+        .all()
+    )
+
+    return history
