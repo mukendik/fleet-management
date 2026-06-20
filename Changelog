@@ -1,0 +1,33 @@
+
+Changelog v0.2.1
+=================
+
+
+Features
+--------
+- Vehicle ↔ Driver assignment
+- Current driver endpoint
+- Vehicle assignment history
+- Assignment management UI
+- Assignment page
+- Driver selection modal
+- JWT secured assignment API
+
+Improvements
+------------
+- Vehicle table navigation to assignment page
+- Vehicle header displayed in assignment page
+- Better handling of assignment history
+- Fixed authentication issues on assignment endpoints
+
+Backend
+-------
+- New Assignment routes
+- Multi-tenant assignment support
+- Assignment history tracking
+
+Frontend
+--------
+- AssignmentsPage
+- AssignmentService
+- Navigation from Vehicles
