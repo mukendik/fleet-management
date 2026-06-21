@@ -26,7 +26,11 @@ export default function AssignmentsPage() {
   // LOAD DATA
   // -------------------------
   useEffect(() => {
-    load();
+    const interval = setInterval(() => {
+      load();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [id]);
 
   const load = async () => {
@@ -226,7 +230,7 @@ export default function AssignmentsPage() {
         {!Array.isArray(history) || history.length === 0 ? (
           <p>No history</p>
         ) : (
-          history.map((h) => (
+        history.map((h) => (
             <div
               key={h.id}
               style={{
@@ -240,6 +244,22 @@ export default function AssignmentsPage() {
                 </strong>
               ) : (
                 <strong>Unknown driver</strong>
+              )}
+
+              {/* 🟢 BADGE ACTIVE */}
+              {!h.unassigned_at && (
+                <span
+                  style={{
+                    background: "#16a34a",
+                    color: "white",
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    marginLeft: 10,
+                  }}
+                >
+                  ACTIVE
+                </span>
               )}
 
               <div style={{ fontSize: 13, color: "#6b7280" }}>
