@@ -40,7 +40,7 @@ export default function AssignmentsPage() {
       ]);
 
       setCurrent(currentRes.data || null);
-      setHistory(historyRes.data || []);
+      setHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
       setDrivers(driversRes.data?.items || []);
     } catch (err) {
       console.error("Assignment load error:", err);
@@ -50,7 +50,7 @@ export default function AssignmentsPage() {
   };
 
   // -------------------------
-  // VEHICLE HEADER FALLBACK
+  // VEHICLE HEADER
   // -------------------------
   useEffect(() => {
     if (location.state?.vehicle) {
@@ -62,24 +62,44 @@ export default function AssignmentsPage() {
   // ASSIGN DRIVER
   // -------------------------
   const handleAssign = async () => {
-  try {
-    if (!selectedDriver) return; 
+    try {
+      if (!selectedDriver) return;
 
-    await assignmentService.create({
-      vehicle_id: Number(id),
-      driver_id: Number(selectedDriver),
-    });
+      await assignmentService.create({
+        vehicle_id: Number(id),
+        driver_id: Number(selectedDriver),
+      });
 
-    setShowModal(false);
-    setSelectedDriver("");
-    load();
-  } catch (err) {
-    console.error("Assign error:", err);
-  }
-};
+      setShowModal(false);
+      setSelectedDriver("");
+      await load();
+    } catch (err) {
+      console.error("Assign error:", err);
+    }
+  };
 
   // -------------------------
-  // SAFE DRIVER RENDER
+  // UNASSIGN DRIVER
+  // -------------------------
+  const handleUnassign = async () => {
+    if (!current?.id) return;
+
+    const confirm = window.confirm(
+      "Are you sure you want to unassign this driver?"
+    );
+
+    if (!confirm) return;
+
+    try {
+      await assignmentService.remove(current.id);
+      await load();
+    } catch (err) {
+      console.error("Unassign error:", err);
+    }
+  };
+
+  // -------------------------
+  // SAFE RENDER DRIVER
   // -------------------------
   const renderDriver = (driver) => {
     if (!driver) return <span>Unknown driver</span>;
@@ -95,14 +115,17 @@ export default function AssignmentsPage() {
   // UI
   // -------------------------
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
 
       {/* BACK */}
-      <button onClick={() => navigate("/vehicles")}>
+      <button
+        onClick={() => navigate("/vehicles")}
+        style={{ marginBottom: 20 }}
+      >
         ← Back
       </button>
 
-      <h1>Vehicle Assignment</h1>
+      <h1 style={{ marginBottom: 20 }}>Vehicle Assignment</h1>
 
       {/* VEHICLE HEADER */}
       {vehicle && (
@@ -112,13 +135,14 @@ export default function AssignmentsPage() {
             background: "#f9fafb",
             borderRadius: 10,
             marginBottom: 20,
+            border: "1px solid #e5e7eb",
           }}
         >
-          <h2>{vehicle.name}</h2>
-          <p>
+          <h2 style={{ margin: 0 }}>{vehicle.name}</h2>
+          <p style={{ margin: "5px 0" }}>
             {vehicle.brand} {vehicle.model}
           </p>
-          <p>
+          <p style={{ margin: 0 }}>
             <strong>Plate:</strong> {vehicle.plate_number}
           </p>
         </div>
@@ -140,9 +164,7 @@ export default function AssignmentsPage() {
         ) : current?.driver ? (
           <>
             <p>{renderDriver(current.driver)}</p>
-
             <p>{current.driver.license_number || "-"}</p>
-
             <p>
               Assigned since: {current.assigned_at || "-"}
             </p>
@@ -151,13 +173,54 @@ export default function AssignmentsPage() {
           <p>No driver assigned</p>
         )}
 
-        <button onClick={() => setShowModal(true)}>
-          {current?.driver ?  "Change Driver" : "Assign Driver"}
-        </button>
+        {/* ACTIONS */}
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginTop: 15,
+          }}
+        >
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 6,
+              border: "none",
+              background: "#2563eb",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            {current?.driver ? "Change Driver" : "Assign Driver"}
+          </button>
+
+          {current?.id && (
+            <button
+              onClick={handleUnassign}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 6,
+                border: "none",
+                background: "#dc2626",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              Unassign
+            </button>
+          )}
+        </div>
       </div>
 
       {/* HISTORY */}
-      <div>
+      <div
+        style={{
+          padding: 15,
+          border: "1px solid #e5e7eb",
+          borderRadius: 10,
+        }}
+      >
         <h3>History</h3>
 
         {!Array.isArray(history) || history.length === 0 ? (
@@ -173,13 +236,13 @@ export default function AssignmentsPage() {
             >
               {h?.driver ? (
                 <strong>
-                  {h?.driver?.first_name} {h?.driver?.last_name}
+                  {h.driver.first_name} {h.driver.last_name}
                 </strong>
               ) : (
                 <strong>Unknown driver</strong>
               )}
 
-              <div>
+              <div style={{ fontSize: 13, color: "#6b7280" }}>
                 {h.assigned_at} → {h.unassigned_at || "Now"}
               </div>
             </div>
@@ -204,7 +267,7 @@ export default function AssignmentsPage() {
               background: "white",
               padding: 20,
               borderRadius: 10,
-              width: 400,
+              width: 420,
             }}
           >
             <h3>Select Driver</h3>
@@ -212,9 +275,13 @@ export default function AssignmentsPage() {
             <select
               value={selectedDriver}
               onChange={(e) => setSelectedDriver(e.target.value)}
-              style={{ width: "100%", padding: 10 }}
+              style={{
+                width: "100%",
+                padding: 10,
+                marginTop: 10,
+              }}
             >
-              <option value="">-- Choose --</option>
+              <option value="">Select a driver</option>
 
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -223,9 +290,30 @@ export default function AssignmentsPage() {
               ))}
             </select>
 
-            <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
-              <button onClick={handleAssign}>Save</button>
-              <button onClick={() => setShowModal(false)}>Cancel</button>
+            <div
+              style={{
+                marginTop: 15,
+                display: "flex",
+                gap: 10,
+                justifyContent: "flex-end",
+              }}
+            >
+              <button onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+
+              <button
+                onClick={handleAssign}
+                style={{
+                  background: "#2563eb",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                }}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
