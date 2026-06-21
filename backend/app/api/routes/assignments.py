@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
+from sqlalchemy import desc, func
 from datetime import datetime
+import time
 
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.vehicle_assignment import VehicleAssignment
@@ -19,31 +21,32 @@ def assign_vehicle(
     _role=Depends(require_roles(["admin", "manager"]))
 ):
 
-    # 1. close old assignment for vehicle
+    company_id = current_user.company_id
+
+    # close old assignment vehicle
     db.query(VehicleAssignment).filter(
         VehicleAssignment.vehicle_id == data.vehicle_id,
-        VehicleAssignment.is_active == True,
-        VehicleAssignment.company_id == current_user.company_id
+        VehicleAssignment.company_id == company_id,
+        VehicleAssignment.is_active == True
     ).update({
         "is_active": False,
         "unassigned_at": datetime.utcnow()
     })
 
-    # 2. close old assignment for driver
+    # close old assignment driver
     db.query(VehicleAssignment).filter(
         VehicleAssignment.driver_id == data.driver_id,
-        VehicleAssignment.is_active == True,
-        VehicleAssignment.company_id == current_user.company_id
+        VehicleAssignment.company_id == company_id,
+        VehicleAssignment.is_active == True
     ).update({
         "is_active": False,
         "unassigned_at": datetime.utcnow()
     })
 
-    # 3. create new assignment
     assignment = VehicleAssignment(
         vehicle_id=data.vehicle_id,
         driver_id=data.driver_id,
-        company_id=current_user.company_id,
+        company_id=company_id,
         is_active=True,
         assigned_at=datetime.utcnow()
     )
@@ -62,6 +65,7 @@ def unassign_driver(
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
+
     assignment = (
         db.query(VehicleAssignment)
         .filter(
@@ -84,27 +88,33 @@ def unassign_driver(
 
 #current driver of a vehicle
 @router.get("/vehicle/{vehicle_id}/current")
-def get_current_driver(vehicle_id: int, db: Session = Depends(get_db)):
+def get_current_driver(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
 
-    assignment = (
+    start = time.time()
+
+    result = (
         db.query(VehicleAssignment)
         .options(joinedload(VehicleAssignment.driver))
         .filter(
             VehicleAssignment.vehicle_id == vehicle_id,
+            VehicleAssignment.company_id == current_user.company_id,
             VehicleAssignment.is_active == True
         )
         .first()
     )
 
-    if not assignment:
-        return {
-            "driver": None,
-            "id": None,
-            "assigned_at": None,
-            "vehicle_id": vehicle_id
-        }
+    print("🔥 CURRENT QUERY TIME:", time.time() - start)
 
-    return assignment
+    return result or {
+        "driver": None,
+        "id": None,
+        "assigned_at": None,
+        "vehicle_id": vehicle_id
+    }
 
 #historique véhicule
 @router.get("/vehicle/{vehicle_id}/history")
@@ -121,6 +131,12 @@ def vehicle_history(
             VehicleAssignment.vehicle_id == vehicle_id,
             VehicleAssignment.company_id == current_user.company_id
         )
-        .order_by(VehicleAssignment.assigned_at.desc())
+        .order_by(
+            func.coalesce(
+                VehicleAssignment.unassigned_at,
+                VehicleAssignment.assigned_at
+            ).desc()
+        )
+        .limit(100)
         .all()
     )

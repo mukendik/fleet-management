@@ -25,33 +25,35 @@ export default function AssignmentsPage() {
   // -------------------------
   // LOAD DATA
   // -------------------------
-  useEffect(() => {
-    const interval = setInterval(() => {
-      load();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [id]);
-
   const load = async () => {
     setLoading(true);
 
     try {
-      const [currentRes, historyRes, driversRes] = await Promise.all([
-        assignmentService.getCurrent(id),
-        assignmentService.getHistory(id),
-        driverService.getAll(),
-      ]);
+    const currentRes = await assignmentService.getCurrent(id);
+    const historyRes = await assignmentService.getHistory(id);
+    const driversRes = await driverService.getAll();
 
-      setCurrent(currentRes.data || null);
-      setHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
-      setDrivers(driversRes.data?.items || []);
+    setCurrent(currentRes.data || null);
+    setHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
+    setDrivers(driversRes.data?.items || []);
     } catch (err) {
-      console.error("Assignment load error:", err);
+       console.error("❌ LOAD FAILED:", err);
+       console.error("❌ DETAILS:", err?.response?.data);
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔥 IMPORTANT: load immédiat + polling propre
+  useEffect(() => {
+    load(); // initial fetch immédiat
+
+    const interval = setInterval(() => {
+      load();
+    }, 15000); // 15s (plus réactif que 30s)
+
+    return () => clearInterval(interval);
+  }, [id]);
 
   // -------------------------
   // VEHICLE HEADER
@@ -122,10 +124,7 @@ export default function AssignmentsPage() {
     <div style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
 
       {/* BACK */}
-      <button
-        onClick={() => navigate("/vehicles")}
-        style={{ marginBottom: 20 }}
-      >
+      <button onClick={() => navigate("/vehicles")} style={{ marginBottom: 20 }}>
         ← Back
       </button>
 
@@ -133,15 +132,13 @@ export default function AssignmentsPage() {
 
       {/* VEHICLE HEADER */}
       {vehicle && (
-        <div
-          style={{
-            padding: 15,
-            background: "#f9fafb",
-            borderRadius: 10,
-            marginBottom: 20,
-            border: "1px solid #e5e7eb",
-          }}
-        >
+        <div style={{
+          padding: 15,
+          background: "#f9fafb",
+          borderRadius: 10,
+          marginBottom: 20,
+          border: "1px solid #e5e7eb",
+        }}>
           <h2 style={{ margin: 0 }}>{vehicle.name}</h2>
           <p style={{ margin: "5px 0" }}>
             {vehicle.brand} {vehicle.model}
@@ -152,15 +149,13 @@ export default function AssignmentsPage() {
         </div>
       )}
 
-      {/* CURRENT ASSIGNMENT */}
-      <div
-        style={{
-          padding: 15,
-          border: "1px solid #e5e7eb",
-          borderRadius: 10,
-          marginBottom: 20,
-        }}
-      >
+      {/* CURRENT */}
+      <div style={{
+        padding: 15,
+        border: "1px solid #e5e7eb",
+        borderRadius: 10,
+        marginBottom: 20,
+      }}>
         <h3>Current Driver</h3>
 
         {loading ? (
@@ -169,22 +164,13 @@ export default function AssignmentsPage() {
           <>
             <p>{renderDriver(current.driver)}</p>
             <p>{current.driver.license_number || "-"}</p>
-            <p>
-              Assigned since: {current.assigned_at || "-"}
-            </p>
+            <p>Assigned since: {current.assigned_at || "-"}</p>
           </>
         ) : (
           <p>No driver assigned</p>
         )}
 
-        {/* ACTIONS */}
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            marginTop: 15,
-          }}
-        >
+        <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
           <button
             onClick={() => setShowModal(true)}
             style={{
@@ -193,7 +179,6 @@ export default function AssignmentsPage() {
               border: "none",
               background: "#2563eb",
               color: "white",
-              cursor: "pointer",
             }}
           >
             {current?.driver ? "Change Driver" : "Assign Driver"}
@@ -208,7 +193,6 @@ export default function AssignmentsPage() {
                 border: "none",
                 background: "#dc2626",
                 color: "white",
-                cursor: "pointer",
               }}
             >
               Unassign
@@ -218,26 +202,21 @@ export default function AssignmentsPage() {
       </div>
 
       {/* HISTORY */}
-      <div
-        style={{
-          padding: 15,
-          border: "1px solid #e5e7eb",
-          borderRadius: 10,
-        }}
-      >
+      <div style={{
+        padding: 15,
+        border: "1px solid #e5e7eb",
+        borderRadius: 10,
+      }}>
         <h3>History</h3>
 
         {!Array.isArray(history) || history.length === 0 ? (
           <p>No history</p>
         ) : (
-        history.map((h) => (
-            <div
-              key={h.id}
-              style={{
-                padding: 10,
-                borderBottom: "1px solid #eee",
-              }}
-            >
+          history.map((h) => (
+            <div key={h.id} style={{
+              padding: 10,
+              borderBottom: "1px solid #eee",
+            }}>
               {h?.driver ? (
                 <strong>
                   {h.driver.first_name} {h.driver.last_name}
@@ -246,18 +225,15 @@ export default function AssignmentsPage() {
                 <strong>Unknown driver</strong>
               )}
 
-              {/* 🟢 BADGE ACTIVE */}
               {!h.unassigned_at && (
-                <span
-                  style={{
-                    background: "#16a34a",
-                    color: "white",
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    fontSize: 12,
-                    marginLeft: 10,
-                  }}
-                >
+                <span style={{
+                  background: "#16a34a",
+                  color: "white",
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  marginLeft: 10,
+                }}>
                   ACTIVE
                 </span>
               )}
@@ -272,34 +248,26 @@ export default function AssignmentsPage() {
 
       {/* MODAL */}
       {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: 20,
-              borderRadius: 10,
-              width: 420,
-            }}
-          >
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}>
+          <div style={{
+            background: "white",
+            padding: 20,
+            borderRadius: 10,
+            width: 420,
+          }}>
             <h3>Select Driver</h3>
 
             <select
               value={selectedDriver}
               onChange={(e) => setSelectedDriver(e.target.value)}
-              style={{
-                width: "100%",
-                padding: 10,
-                marginTop: 10,
-              }}
+              style={{ width: "100%", padding: 10 }}
             >
               <option value="">Select a driver</option>
 
@@ -310,28 +278,23 @@ export default function AssignmentsPage() {
               ))}
             </select>
 
-            <div
-              style={{
-                marginTop: 15,
-                display: "flex",
-                gap: 10,
-                justifyContent: "flex-end",
-              }}
-            >
+            <div style={{
+              marginTop: 15,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+            }}>
               <button onClick={() => setShowModal(false)}>
                 Cancel
               </button>
 
-              <button
-                onClick={handleAssign}
-                style={{
-                  background: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                }}
-              >
+              <button onClick={handleAssign} style={{
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: 6,
+              }}>
                 Save
               </button>
             </div>

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
+import time
 
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
@@ -16,40 +17,46 @@ router = APIRouter()
 # ----------------------
 @router.get("", response_model=DriverListResponse)
 def get_drivers(
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
-    search: Optional[str] = None,
-    status: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    _role=Depends(require_roles(["admin", "manager"]))
-):
+        page: int = Query(1, ge=1),
+        limit: int = Query(50, ge=1, le=200),  
+        search: Optional[str] = None,
+        status: Optional[str] = None,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+        _role=Depends(require_roles(["admin", "manager"]))
+    ):
 
-    query = db.query(Driver).filter(
-        Driver.company_id == current_user.company_id
-    )
-
-    if search:
-        query = query.filter(
-            (Driver.first_name.ilike(f"%{search}%")) |
-            (Driver.last_name.ilike(f"%{search}%")) |
-            (Driver.license_number.ilike(f"%{search}%"))
+        query = db.query(Driver).filter(
+            Driver.company_id == current_user.company_id
         )
 
-    if status:
-        query = query.filter(Driver.status == status)
+        if search:
+            query = query.filter(
+                (Driver.first_name.ilike(f"%{search}%")) |
+                (Driver.last_name.ilike(f"%{search}%")) |
+                (Driver.license_number.ilike(f"%{search}%"))
+            )
 
-    total = query.count()
+        if status:
+            query = query.filter(Driver.status == status)
 
-    items = query.offset((page - 1) * limit).limit(limit).all()
+        total = query.count()
 
-    return DriverListResponse(
-        items=items,
-        total=total,
-        page=page,
-        limit=limit,
-        pages=(total + limit - 1) // limit
-    )
+        items = (
+            query
+            .offset((page - 1) * limit)
+            .limit(limit)
+            .all()
+        )
+
+        return DriverListResponse(
+            items=items,
+            total=total,
+            page=page,
+            limit=limit,
+            pages=(total + limit - 1) // limit
+        )
+
 
 
 # ----------------------
