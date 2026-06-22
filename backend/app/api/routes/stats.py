@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func, distinct
 from datetime import datetime, timedelta
 
 from app.api.deps import get_db, get_current_user
@@ -19,35 +20,66 @@ def get_dashboard(
     company_id = current_user.company_id
 
     if not company_id:
-        return {
-            "error": "Missing company_id on user"
-        }
+        return {"error": "Missing company_id on user"}
 
-    # ---------------- VEHICLES ----------------
+    # =========================
+    # VEHICLES
+    # =========================
     total_vehicles = db.query(Vehicle).filter(
         Vehicle.company_id == company_id
     ).count()
 
-    assigned_vehicles = db.query(VehicleAssignment.vehicle_id).filter(
+    assigned_vehicles = db.query(
+        func.count(distinct(VehicleAssignment.vehicle_id))
+    ).filter(
         VehicleAssignment.company_id == company_id,
         VehicleAssignment.is_active == True
-    ).distinct().count()
+    ).scalar()
 
     free_vehicles = max(total_vehicles - assigned_vehicles, 0)
 
-    # ---------------- DRIVERS ----------------
+    # =========================
+    # DRIVERS (BUSINESS LOGIC)
+    # =========================
     total_drivers = db.query(Driver).filter(
         Driver.company_id == company_id
     ).count()
 
-    active_drivers = db.query(VehicleAssignment.driver_id).filter(
+    # drivers actifs métier
+    active_drivers = db.query(Driver).filter(
+        Driver.company_id == company_id,
+        Driver.status == "active"
+    ).count()
+
+    inactive_drivers = db.query(Driver).filter(
+        Driver.company_id == company_id,
+        Driver.status != "active"
+    ).count()
+
+    # drivers actuellement assignés à un véhicule (REAL-TIME OPS STATE)
+    assigned_drivers = db.query(
+        func.count(distinct(VehicleAssignment.driver_id))
+    ).filter(
         VehicleAssignment.company_id == company_id,
         VehicleAssignment.is_active == True
-    ).distinct().count()
+    ).scalar()
 
-    inactive_drivers = max(total_drivers - active_drivers, 0)
+    # drivers actifs MAIS NON assignés (très utile KPI SaaS)
+    unassigned_active_drivers = db.query(Driver).filter(
+        Driver.company_id == company_id,
+        Driver.status == "active"
+    ).filter(
+        ~Driver.id.in_(
+            db.query(VehicleAssignment.driver_id).filter(
+                VehicleAssignment.company_id == company_id,
+                VehicleAssignment.is_active == True
+            )
+        )
+    ).count()
 
-    # ---------------- ASSIGNMENTS ----------------
+    # =========================
+    # ASSIGNMENTS
+    # =========================
     now = datetime.utcnow()
     today_start = datetime(now.year, now.month, now.day)
     week_start = now - timedelta(days=7)
@@ -65,10 +97,18 @@ def get_dashboard(
     churn = db.query(VehicleAssignment).filter(
         VehicleAssignment.company_id == company_id,
         VehicleAssignment.is_active == False,
-        VehicleAssignment.unassigned_at != None,
+        VehicleAssignment.unassigned_at.isnot(None),
         VehicleAssignment.unassigned_at >= week_start
     ).count()
 
+    active_assignments = db.query(VehicleAssignment).filter(
+        VehicleAssignment.company_id == company_id,
+        VehicleAssignment.is_active == True
+    ).count()
+
+    # =========================
+    # RESPONSE
+    # =========================
     return {
         "vehicles": {
             "total": total_vehicles,
@@ -78,9 +118,12 @@ def get_dashboard(
         "drivers": {
             "total": total_drivers,
             "active": active_drivers,
-            "inactive": inactive_drivers
+            "inactive": inactive_drivers,
+            "assigned": assigned_drivers,
+            "available": unassigned_active_drivers
         },
         "assignments": {
+            "active": active_assignments,
             "today": today_assignments,
             "weekly": weekly_assignments,
             "churn": churn

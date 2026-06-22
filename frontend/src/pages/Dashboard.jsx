@@ -26,6 +26,7 @@ export default function Dashboard() {
 
   if (!data) return <p>Loading dashboard...</p>;
 
+
   return (
     <div style={styles.container}>
 
@@ -38,7 +39,11 @@ export default function Dashboard() {
       {/* KPI ROW */}
       <div style={styles.kpiGrid}>
         <KpiCard title="Vehicles" value={data.vehicles.total} sub={`${data.vehicles.free} free`} />
-        <KpiCard title="Drivers" value={data.drivers.total} sub={`${data.drivers.active} active`} />
+        <KpiCard
+          title="Drivers"
+          value={data.drivers.total}
+          sub={`${data.drivers.active} active • ${data.drivers.assigned} assigned`}
+        />
         <KpiCard title="Today Assignments" value={data.assignments.today} />
         <KpiCard title="Weekly Activity" value={data.assignments.weekly} />
       </div>

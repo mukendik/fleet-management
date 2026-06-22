@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import vehicles, drivers, assignments, stats
+from app.api.routes import vehicles, drivers, assignments, stats, activity
 from app.api.routes.auth import router as auth_router
 
 from app.core.logging import setup_logging
@@ -167,3 +167,4 @@ app.include_router(
     tags=["Assignments"]
 )
 app.include_router(stats.router, prefix="/stats", tags=["stats"])
+app.include_router(activity.router, prefix="/activity", tags=["activity"])
