@@ -3,10 +3,11 @@ from sqlalchemy import (
     Integer,
     String,
     Date,
+    DateTime,
     ForeignKey,
     Index,
 )
-
+from sqlalchemy import func
 from app.models.base import Base
 
 
@@ -44,6 +45,18 @@ class Vehicle(Base):
     )
 
     status = Column(String, default="active", index=True)
+
+    # =========================
+    # MAINTENANCE SYSTEM (MVP)
+    # =========================
+
+    last_service_km = Column(Integer, default=0)
+    last_service_date = Column(DateTime, nullable=True)
+
+    next_service_km = Column(Integer, nullable=True)
+
+    next_inspection_date = Column(Date, nullable=True)
+    next_insurance_date = Column(Date, nullable=True)
 
     __table_args__ = (
         Index("ix_vehicle_company_plate", "company_id", "plate_number"),
