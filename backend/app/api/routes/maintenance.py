@@ -11,42 +11,33 @@ router = APIRouter()
 # =========================
 # DASHBOARD
 # =========================
-
 @router.get("/dashboard")
-def maintenance_dashboard(
+def dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
 
-    return MaintenanceService.get_dashboard(
-        db,
-        current_user.company_id
-    )
+    return MaintenanceService.get_dashboard(db, current_user.company_id)
 
 
 # =========================
-# FULL SCAN (ADMIN TOOL)
+# FULL SCAN
 # =========================
-
 @router.post("/scan")
-def run_scan(
+def scan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin"]))
 ):
 
-    return MaintenanceService.run_full_scan(
-        db,
-        current_user.company_id
-    )
+    return MaintenanceService.run_full_scan(db, current_user.company_id)
 
 
 # =========================
-# CHECK SINGLE VEHICLE
+# SINGLE VEHICLE CHECK
 # =========================
-
-@router.post("/vehicle/{vehicle_id}/check")
+@router.post("/vehicle/{vehicle_id}")
 def check_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
