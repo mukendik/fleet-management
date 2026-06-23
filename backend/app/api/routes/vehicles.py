@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services.vehicle_service import get_vehicle_by_id
+from app.services.maintenance_service import MaintenanceService
 
 router = APIRouter()
 
@@ -195,9 +196,31 @@ def update_vehicle(
         vin = data.vin_number.strip()
         vehicle.vin_number = vin if vin else None
 
+<<<<<<< HEAD
+=======
+    # -------------------------
+    # TRACK OLD MILEAGE
+    # -------------------------
+    old_mileage = vehicle.mileage
+
+    # =========================
+    # MILEAGE HOOK (MAINTENANCE)
+    # =========================
+    if data.mileage is not None and data.mileage != old_mileage:
+        try:
+            MaintenanceService.on_mileage_update(db, vehicle)
+        except Exception as e:
+            # IMPORTANT: ne pas bloquer update vehicle
+            print(f"[Maintenance Hook Error] {e}")
+
+    # -------------------------
+    # DB commit safe
+    # -------------------------
+>>>>>>> feature/VehicleMaintenance
     try:
         db.commit()
         db.refresh(vehicle)
+        MaintenanceService.check_vehicle(db, vehicle)
         return vehicle
 
     except Exception as e:

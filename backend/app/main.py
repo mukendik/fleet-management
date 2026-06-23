@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import vehicles, drivers, assignments, stats, activity
+from app.api.routes import vehicles, drivers, assignments, stats, activity, maintenance
 from app.api.routes.auth import router as auth_router
 
 from app.core.logging import setup_logging
@@ -119,10 +119,12 @@ def startup_event():
     from app.models.user import User
     from app.models.vehicle import Vehicle
     from app.models.driver import Driver
+    from app.models.maintenance_rule import MaintenanceRule
+    from app.models.maintenance_alert import MaintenanceAlert
     logger.info("Starting Fleet Manager API...")
 
     try:
-        Base.metadata.create_all(bind=engine)
+      # Base.metadata.create_all(bind=engine)
         logger.info("Database connected & tables created")
     except Exception as e:
         logger.exception("Database startup failed")
@@ -168,3 +170,8 @@ app.include_router(
 )
 app.include_router(stats.router, prefix="/stats", tags=["stats"])
 app.include_router(activity.router, prefix="/activity", tags=["activity"])
+app.include_router(
+    maintenance.router,
+    prefix="/maintenance",
+    tags=["Maintenance"]
+)

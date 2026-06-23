@@ -29,6 +29,16 @@ from app.core.security import (
 
 router = APIRouter()
 
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_db
+from app.models.user import User
+from app.schemas.user import UserCreate
+from app.core.security import hash_password
+
+
 # REGISTER
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -46,10 +56,22 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     )
 
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
 
-    return new_user
+    try:
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+
+    except IntegrityError as e:
+        db.rollback()
+
+        # DEBUG utile (optionnel mais recommandé)
+        print("DB ERROR:", str(e))
+
+        raise HTTPException(
+            status_code=400,
+            detail="Database constraint violation (check company_id / email / role)"
+        )
 
 
 # LOGIN

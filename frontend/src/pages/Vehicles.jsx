@@ -24,16 +24,13 @@ export default function Vehicles() {
     remove,
   } = useVehicles(navigate);
 
-  // filters
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [brand, setBrand] = useState("");
 
-  // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  // modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -41,7 +38,6 @@ export default function Vehicles() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  // 🔥 FETCH CENTRAL
   useEffect(() => {
     fetchVehicles({
       page: currentPage,
@@ -79,9 +75,12 @@ export default function Vehicles() {
     setConfirmOpen(true);
   };
 
-  // ======================
-  // CREATE / UPDATE
-  // ======================
+  // 🔥 NEW: GO TO DETAIL
+  const goToDetail = (id) => {
+    console.log("NAVIGATE TO VEHICLE:", id);
+    navigate(`/vehicles/${id}`);
+  };
+
   const handleSave = async (form) => {
     try {
       if (isEditMode) {
@@ -100,9 +99,6 @@ export default function Vehicles() {
     }
   };
 
-  // ======================
-  // DELETE
-  // ======================
   const handleDelete = async () => {
     if (!deleteId) return;
 
@@ -121,9 +117,7 @@ export default function Vehicles() {
   return (
     <div style={{ padding: 20 }}>
 
-      {/* ACTION BAR */}
       <div style={{ display: "flex", gap: 10, marginBottom: 15 }}>
-
         <button onClick={openCreate}>+ Create Vehicle</button>
 
         <input
@@ -161,16 +155,14 @@ export default function Vehicles() {
         </select>
       </div>
 
-      {/* TABLE */}
       <VehicleTable
         data={vehicles}
         onEdit={openEdit}
         onDelete={openDelete}
+        onView={goToDetail}
       />
 
-      {/* PAGINATION */}
       <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
-
         <button
           disabled={currentPage === 1}
           onClick={() => setCurrentPage((p) => p - 1)}
@@ -188,10 +180,8 @@ export default function Vehicles() {
         >
           Next
         </button>
-
       </div>
 
-      {/* MODALS */}
       <VehicleModal
         isOpen={isModalOpen}
         initialData={selectedVehicle}
@@ -209,7 +199,6 @@ export default function Vehicles() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
       />
-
     </div>
   );
 }

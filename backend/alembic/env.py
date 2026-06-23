@@ -10,7 +10,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.core.config import settings
 from app.models.base import Base
-from app.models import user, company, vehicle
+from app.models import (
+    user,
+    company,
+    vehicle,
+    driver,
+    vehicle_assignment,
+    maintenance_rule,
+    maintenance_alert,
+)
+import app.models
 
 # this is the Alembic Config object
 config = context.config
