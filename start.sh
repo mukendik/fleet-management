@@ -12,6 +12,7 @@ echo "🔄 Restart backend..."
 docker compose restart backend
 
 echo "📦 Run migrations (alembic)..."
+docker exec -it fleet_backend alembic revision --autogenerate -m "update"
 docker exec -it fleet_backend alembic upgrade head
 
 echo "🏢 Cleaning demo data..."
