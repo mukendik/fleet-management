@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services.vehicle_service import get_vehicle_by_id
+from app.services.maintenance_service import MaintenanceService
 
 router = APIRouter()
 
@@ -203,6 +204,7 @@ def update_vehicle(
     try:
         db.commit()
         db.refresh(vehicle)
+        MaintenanceService.check_vehicle(db, vehicle)
         return vehicle
 
     except Exception as e:
