@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getVehicleIntelligence } from "../../services/maintenanceService";
+import { getVehicleIntelligence } from "./../services/maintenanceService";
 
-import VehicleRiskCard from "./VehicleRiskCard";
-import MaintenanceTimeline from "./MaintenanceTimeline";
-import VehicleAlertsPanel from "./VehicleAlertsPanel";
+import VehicleRiskCard from "../components/vehicle-intelligence/VehicleRiskCard";
+import MaintenanceTimeline from "../components/vehicle-intelligence/MaintenanceTimeline";
+import VehicleAlertsPanel from "../components/vehicle-intelligence/VehicleAlertsPanel";
 
 const VehicleIntelligencePage = () => {
   const { id } = useParams();

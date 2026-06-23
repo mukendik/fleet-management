@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import VehicleActionsMenu from "./VehicleActionsMenu";
 
-export default function VehicleTable({ data, onEdit, onDelete }) {
+export default function VehicleTable({ data, onEdit, onDelete, onAssign, onView }) {
 
   const navigate = useNavigate();
 
@@ -17,10 +18,6 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
     borderCollapse: "collapse",
   };
 
-  const headerRowStyle = {
-    background: "#f8fafc",
-  };
-
   const thStyle = {
     padding: "14px",
     textAlign: "left",
@@ -35,31 +32,6 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
     fontSize: "14px",
     color: "#111827",
     borderBottom: "1px solid #f1f5f9",
-  };
-
-  const actionsStyle = {
-    display: "flex",
-    gap: "8px",
-  };
-
-  const editBtn = {
-    padding: "6px 10px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#2563eb",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "12px",
-  };
-
-  const deleteBtn = {
-    padding: "6px 10px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#dc2626",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "12px",
   };
 
   const badge = (value) => {
@@ -83,7 +55,7 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
     <div style={containerStyle}>
       <table style={tableStyle}>
         <thead>
-          <tr style={headerRowStyle}>
+          <tr>
             <th style={thStyle}>ID</th>
             <th style={thStyle}>Name</th>
             <th style={thStyle}>Brand</th>
@@ -117,34 +89,31 @@ export default function VehicleTable({ data, onEdit, onDelete }) {
                 </span>
               </td>
 
+              {/* ✅ MENU 3 POINTS */}
               <td style={tdStyle}>
-                <div style={actionsStyle}>
-                  <button style={editBtn} onClick={() => onEdit(v)}>
-                    Edit
-                  </button>
+                <VehicleActionsMenu
 
-                  <button style={deleteBtn} onClick={() => onDelete(v.id)}>
-                    Delete
-                  </button>
-                  <button
-                    style={{
-                      background: "#111827",
-                      color: "white",
-                      marginLeft: 6,
-                      cursor: "pointer",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "6px 10px"
-                    }}
-                    onClick={() =>
+                  onView={() => {
+                    console.log("VIEW CLICKED", v.id);
+
+                    if (!onView) {
+                      console.error("onView is not defined");
+                      return;
+                    }
+
+                    onView(v.id);
+                  }}
+
+                  onEdit={() => onEdit(v)}
+
+                  onAssign={() =>
                     navigate(`/vehicles/${v.id}/assignments`, {
                       state: { vehicle: v }
                     })
                   }
-                  >
-                    Assign
-                  </button>
-                </div>
+
+                  onDelete={() => onDelete(v.id)}
+                />
               </td>
             </tr>
           ))}

@@ -1,7 +1,7 @@
 import React from "react";
 import { useMaintenance } from "../hooks/useMaintenance";
-import MaintenanceStats from "../components/MaintenanceStats";
-import AlertsTable from "../components/AlertsTable";
+import MaintenanceStats from "../components/maintenance/MaintenanceStats";
+import AlertsTable from "../components/maintenance/AlertsTable";
 
 const MaintenanceDashboard = () => {
   const { dashboard, alerts, loading, scan, resolve } = useMaintenance();

@@ -4,7 +4,7 @@ import {
   getMaintenanceAlerts,
   runMaintenanceScan,
   resolveAlert,
-} from "../api/maintenanceService";
+} from "../services/maintenanceService";
 
 export const useMaintenance = () => {
   const [dashboard, setDashboard] = useState(null);
