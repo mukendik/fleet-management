@@ -124,3 +124,72 @@ def resolve_alert(
         "message": "Alert resolved",
         "alert_id": alert.id
     }
+
+# =========================
+# VEHICLE INTELLIGENCE
+# =========================
+@router.get("/vehicle/{vehicle_id}/intelligence")
+def vehicle_intelligence(vehicle_id: int, db: Session = Depends(get_db)):
+
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
+    # -------------------------
+    # RISK SCORE
+    # -------------------------
+    risk = MaintenanceService.compute_risk_score(vehicle)
+
+    # -------------------------
+    # ACTIVE ALERTS
+    # -------------------------
+    alerts = db.query(MaintenanceAlert).filter(
+        MaintenanceAlert.vehicle_id == vehicle_id,
+        MaintenanceAlert.resolved == False
+    ).all()
+
+    # -------------------------
+    # SIMPLE TIMELINE (MVP)
+    # -------------------------
+    timeline = []
+
+    if vehicle.mileage:
+        timeline.append({
+            "label": "Next service",
+            "km": vehicle.mileage + 10000
+        })
+
+    if vehicle.insurance_expiry_date:
+        timeline.append({
+            "label": "Insurance expiry",
+            "date": vehicle.insurance_expiry_date
+        })
+
+    if vehicle.technical_inspection_expiry_date:
+        timeline.append({
+            "label": "Inspection expiry",
+            "date": vehicle.technical_inspection_expiry_date
+        })
+
+    return {
+        "vehicle": {
+            "id": vehicle.id,
+            "name": vehicle.name,
+            "plate_number": vehicle.plate_number,
+            "mileage": vehicle.mileage,
+            "status": vehicle.status
+        },
+        "risk": risk,
+        "alerts": [
+            {
+                "id": a.id,
+                "rule_name": a.rule_name,
+                "severity": a.severity,
+                "current_km": a.current_km,
+                "due_km": a.due_km
+            }
+            for a in alerts
+        ],
+        "timeline": timeline
+    }
