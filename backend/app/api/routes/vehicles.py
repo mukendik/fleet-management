@@ -199,6 +199,21 @@ def update_vehicle(
         vehicle.vin_number = vin if vin else None
 
     # -------------------------
+    # TRACK OLD MILEAGE
+    # -------------------------
+    old_mileage = vehicle.mileage
+
+    # =========================
+    # MILEAGE HOOK (MAINTENANCE)
+    # =========================
+    if data.mileage is not None and data.mileage != old_mileage:
+        try:
+            MaintenanceService.on_mileage_update(db, vehicle)
+        except Exception as e:
+            # IMPORTANT: ne pas bloquer update vehicle
+            print(f"[Maintenance Hook Error] {e}")
+
+    # -------------------------
     # DB commit safe
     # -------------------------
     try:

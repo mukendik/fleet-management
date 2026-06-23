@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
+from app.models.vehicle import Vehicle
+from app.models.maintenance_alert import MaintenanceAlert
 from app.services.maintenance_service import MaintenanceService
 
 router = APIRouter()
@@ -12,40 +15,59 @@ router = APIRouter()
 # DASHBOARD
 # =========================
 @router.get("/dashboard")
-def dashboard(
+def get_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
 
-    return MaintenanceService.get_dashboard(db, current_user.company_id)
+    return MaintenanceService.get_dashboard(
+        db=db,
+        company_id=current_user.company_id
+    )
 
 
 # =========================
-# FULL SCAN
+# ALERTS LIST
 # =========================
-@router.post("/scan")
-def scan(
+@router.get("/alerts")
+def get_alerts(
+    resolved: Optional[bool] = False,
+    severity: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    _role=Depends(require_roles(["admin"]))
+    _role=Depends(require_roles(["admin", "manager"]))
 ):
 
-    return MaintenanceService.run_full_scan(db, current_user.company_id)
+    query = db.query(MaintenanceAlert).filter(
+        MaintenanceAlert.company_id == current_user.company_id
+    )
+
+    if resolved is not None:
+        query = query.filter(MaintenanceAlert.resolved == resolved)
+
+    if severity:
+        query = query.filter(MaintenanceAlert.severity == severity)
+
+    alerts = query.order_by(MaintenanceAlert.id.desc()).limit(limit).all()
+
+    return {
+        "total": len(alerts),
+        "items": alerts
+    }
 
 
 # =========================
-# SINGLE VEHICLE CHECK
+# VEHICLE RISK SCORE
 # =========================
-@router.post("/vehicle/{vehicle_id}")
-def check_vehicle(
+@router.get("/vehicle/{vehicle_id}/risk")
+def get_vehicle_risk(
     vehicle_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
-
-    from app.models.vehicle import Vehicle
 
     vehicle = db.query(Vehicle).filter(
         Vehicle.id == vehicle_id,
@@ -53,11 +75,52 @@ def check_vehicle(
     ).first()
 
     if not vehicle:
-        return {"error": "Vehicle not found"}
+        raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    alerts = MaintenanceService.check_vehicle(db, vehicle)
+    return MaintenanceService.compute_risk_score(vehicle)
+
+
+# =========================
+# FULL SCAN (ALL FLEET)
+# =========================
+@router.post("/scan")
+def run_scan(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
+):
+
+    return MaintenanceService.run_full_scan(
+        db=db,
+        company_id=current_user.company_id
+    )
+
+
+# =========================
+# RESOLVE ALERT
+# =========================
+@router.put("/alerts/{alert_id}/resolve")
+def resolve_alert(
+    alert_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _role=Depends(require_roles(["admin", "manager"]))
+):
+
+    alert = db.query(MaintenanceAlert).filter(
+        MaintenanceAlert.id == alert_id,
+        MaintenanceAlert.company_id == current_user.company_id
+    ).first()
+
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    alert.resolved = True
+
+    db.commit()
+    db.refresh(alert)
 
     return {
-        "vehicle_id": vehicle.id,
-        "alerts_created": len(alerts)
+        "message": "Alert resolved",
+        "alert_id": alert.id
     }
