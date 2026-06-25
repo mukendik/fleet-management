@@ -196,8 +196,6 @@ def update_vehicle(
         vin = data.vin_number.strip()
         vehicle.vin_number = vin if vin else None
 
-<<<<<<< HEAD
-=======
     # -------------------------
     # TRACK OLD MILEAGE
     # -------------------------
@@ -216,7 +214,6 @@ def update_vehicle(
     # -------------------------
     # DB commit safe
     # -------------------------
->>>>>>> feature/VehicleMaintenance
     try:
         db.commit()
         db.refresh(vehicle)
