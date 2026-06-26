@@ -81,7 +81,8 @@ export default function VehicleDetailPage() {
 
       {/* INTELLIGENCE */}
       <div style={{ marginTop: 40 }}>
-        <VehicleIntelligenceCard data={data} />
+     
+        <VehicleIntelligenceCard vehicleId={id} />
       </div>
 
     </div>

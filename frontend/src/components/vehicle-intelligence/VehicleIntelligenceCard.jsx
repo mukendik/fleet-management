@@ -1,257 +1,292 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import api from "../../services/api";
 
-export default function VehicleIntelligenceCard({ data }) {
+export default function VehicleIntelligenceCard({ vehicleId }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchIntelligence = async () => {
+      try {
+        setLoading(true);
+
+        const res = await api.get(
+          `/maintenance/vehicle/${vehicleId}/intelligence`
+        );
+
+        setData(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger l'intelligence véhicule");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (vehicleId) fetchIntelligence();
+  }, [vehicleId]);
+
+  if (loading) return <Card>Chargement intelligence...</Card>;
+  if (error) return <Card error>{error}</Card>;
   if (!data) return null;
 
   const { intelligence, maintenance } = data;
 
-  const riskColor =
-    intelligence?.risk_level === "high"
-      ? "#ef4444"
-      : intelligence?.risk_level === "medium"
-      ? "#f59e0b"
-      : "#10b981";
+  const riskScore = intelligence?.risk_score ?? 0;
+  const riskLevel = intelligence?.risk_level ?? "low";
+
+  const riskConfig = {
+    low: { color: "#10b981", bg: "#ecfdf5" },
+    medium: { color: "#f59e0b", bg: "#fffbeb" },
+    high: { color: "#ef4444", bg: "#fef2f2" },
+  }[riskLevel] || { color: "#6b7280", bg: "#f3f4f6" };
 
   return (
-    <div style={styles.wrapper}>
-      {/* HEADER */}
-      <div style={styles.header}>
-        <h3 style={styles.title}>📊 Vehicle Intelligence</h3>
+    <div style={styles.container}>
 
-        <div
-          style={{
-            ...styles.badge,
-            backgroundColor: riskColor,
-          }}
-        >
-          {intelligence?.risk_level?.toUpperCase() || "LOW"}
-        </div>
-      </div>
+      {/* ===================== INTELLIGENCE ===================== */}
+      <Section title="📊 Intelligence">
 
-      {/* RISK SCORE */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>Risk Score</div>
+        <div style={{ ...styles.intelCard, background: riskConfig.bg }}>
 
-        <div style={styles.scoreRow}>
-          <div style={styles.scoreValue}>
-            {intelligence?.risk_score ?? 0}/100
-          </div>
+          <div style={styles.kpiGrid}>
 
-          <div style={styles.progressBar}>
-            <div
-              style={{
-                ...styles.progressFill,
-                width: `${intelligence?.risk_score ?? 0}%`,
-                backgroundColor: riskColor,
-              }}
-            />
-          </div>
-        </div>
-      </div>
+            {/* SCORE */}
+            <div style={styles.kpi}>
+              <div style={styles.kpiLabel}>Risk Score</div>
 
-      {/* PREDICTIONS (placeholder futur IA) */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>Predictions</div>
-        <div style={styles.placeholder}>
-          {intelligence?.predictions || "No AI predictions available yet"}
-        </div>
-      </div>
-
-      {/* SUGGESTIONS */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>Maintenance Suggestions</div>
-
-        <div style={styles.placeholder}>
-          {intelligence?.suggestions || "No suggestions available yet"}
-        </div>
-      </div>
-
-      {/* MAINTENANCE ALERTS */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>Active Alerts</div>
-
-        {maintenance?.alerts?.length > 0 ? (
-          <div style={styles.alertList}>
-            {maintenance.alerts.map((a) => (
-              <div key={a.id} style={styles.alertCard}>
-                <div style={styles.alertTitle}>{a.rule_name}</div>
-
-                <div style={styles.alertMeta}>
-                  <span>⚠️ {a.severity}</span>
-                  <span>KM: {a.current_km}</span>
-                  <span>Due: {a.due_km}</span>
-                </div>
+              <div style={styles.kpiValue}>
+                {riskScore}/100
               </div>
-            ))}
-          </div>
-        ) : (
-          <div style={styles.placeholderSuccess}>
-            No active maintenance alerts 🎉
-          </div>
-        )}
-      </div>
 
-      {/* TIMELINE */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>Maintenance Timeline</div>
-
-        <div style={styles.timeline}>
-          {maintenance?.timeline?.map((t, i) => (
-            <div key={i} style={styles.timelineItem}>
-              <div style={styles.timelineDot} />
-              <div>
-                <div style={styles.timelineLabel}>{t.label}</div>
-                <div style={styles.timelineSub}>
-                  {t.km ? `${t.km} km` : ""}
-                  {t.date ? ` • ${t.date}` : ""}
-                </div>
+              <div style={styles.progressBar}>
+                <div
+                  style={{
+                    ...styles.progressFill,
+                    width: `${riskScore}%`,
+                    backgroundColor: riskConfig.color,
+                  }}
+                />
               </div>
             </div>
-          ))}
+
+            {/* LEVEL */}
+            <div style={styles.kpi}>
+              <div style={styles.kpiLabel}>Risk Level</div>
+
+              <div
+                style={{
+                  ...styles.badge,
+                  backgroundColor: riskConfig.color,
+                }}
+              >
+                {riskLevel.toUpperCase()}
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
+      </Section>
+
+      {/* ===================== ALERTS ===================== */}
+      <Section title="🛠 Maintenance Alerts">
+
+        {maintenance?.alerts?.length > 0 ? (
+          maintenance.alerts.map((a) => (
+            <div key={a.id} style={styles.alertCard}>
+              <strong>{a.rule_name}</strong>
+
+              <div style={styles.small}>
+                Due: {a.due_km} km • Current: {a.current_km} km
+              </div>
+
+              <div style={styles.tag(riskLevel)}>
+                {a.severity}
+              </div>
+            </div>
+          ))
+        ) : (
+          <Empty text="Aucune alerte active" />
+        )}
+
+      </Section>
+
+      {/* ===================== HISTORY ===================== */}
+      <Section title="📋 Dernières actions">
+
+        <Empty text="Historique maintenance non disponible (MVP)" />
+
+      </Section>
+
+      {/* ===================== FORECAST ===================== */}
+      <Section title="🔮 Prochaines interventions">
+
+        {maintenance?.timeline?.length > 0 ? (
+          maintenance.timeline.map((t, i) => (
+            <div key={i} style={styles.timelineCard}>
+              <strong>{t.label}</strong>
+
+              <div style={styles.small}>
+                {t.km ? `📍 ${t.km} km` : ""}{" "}
+                {t.date ? `📅 ${t.date}` : ""}
+              </div>
+            </div>
+          ))
+        ) : (
+          <Empty text="Aucune estimation disponible" />
+        )}
+
+      </Section>
+
     </div>
   );
 }
 
-/* =======================
+/* =========================
+   UI COMPONENTS
+========================= */
+
+function Section({ title, children }) {
+  return (
+    <div style={styles.section}>
+      <h3 style={styles.sectionTitle}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function Card({ children, error }) {
+  return (
+    <div style={{ ...styles.card, color: error ? "red" : "#111" }}>
+      {children}
+    </div>
+  );
+}
+
+function Empty({ text }) {
+  return <div style={styles.empty}>{text}</div>;
+}
+
+/* =========================
    STYLES
-======================= */
+========================= */
 
 const styles = {
-  wrapper: {
+
+  container: {
     marginTop: 20,
-    padding: 20,
-    borderRadius: 12,
-    border: "1px solid #e5e7eb",
-    backgroundColor: "#fff",
-  },
-
-  header: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  title: {
-    margin: 0,
-    fontSize: 18,
-  },
-
-  badge: {
-    color: "white",
-    padding: "4px 10px",
-    borderRadius: 20,
-    fontSize: 12,
-    fontWeight: "bold",
+    flexDirection: "column",
+    gap: 20,
   },
 
   section: {
-    marginBottom: 18,
+    padding: 15,
+    border: "1px solid #e5e7eb",
+    borderRadius: 12,
+    background: "#fff",
   },
 
   sectionTitle: {
-    fontSize: 13,
+    marginBottom: 10,
+    fontSize: 16,
+  },
+
+  intelCard: {
+    padding: 15,
+    borderRadius: 12,
+  },
+
+  kpiGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+  },
+
+  kpi: {
+    padding: 10,
+    borderRadius: 10,
+    background: "white",
+  },
+
+  kpiLabel: {
+    fontSize: 12,
     color: "#6b7280",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
 
-  scoreRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 15,
-  },
-
-  scoreValue: {
-    fontSize: 22,
+  kpiValue: {
+    fontSize: 20,
     fontWeight: "bold",
-    minWidth: 80,
+    marginBottom: 5,
   },
 
   progressBar: {
-    flex: 1,
-    height: 10,
+    height: 8,
     backgroundColor: "#e5e7eb",
-    borderRadius: 10,
+    borderRadius: 20,
     overflow: "hidden",
   },
 
   progressFill: {
     height: "100%",
-    borderRadius: 10,
+    borderRadius: 20,
+    transition: "width 0.5s ease-in-out",
   },
 
-  placeholder: {
-    padding: 12,
-    backgroundColor: "#f9fafb",
-    borderRadius: 8,
-    color: "#6b7280",
-    fontSize: 13,
-  },
-
-  placeholderSuccess: {
-    padding: 12,
-    backgroundColor: "#ecfdf5",
-    borderRadius: 8,
-    color: "#10b981",
-    fontSize: 13,
-  },
-
-  alertList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
+  badge: {
+    display: "inline-block",
+    padding: "5px 10px",
+    borderRadius: 20,
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 
   alertCard: {
-    padding: 12,
-    border: "1px solid #f3f4f6",
+    padding: 10,
+    border: "1px solid #eee",
     borderRadius: 10,
-    backgroundColor: "#fff7ed",
+    marginBottom: 8,
   },
 
-  alertTitle: {
-    fontWeight: "bold",
-    marginBottom: 5,
+  timelineCard: {
+    padding: 10,
+    border: "1px dashed #ddd",
+    borderRadius: 10,
+    marginBottom: 8,
   },
 
-  alertMeta: {
-    display: "flex",
-    gap: 10,
+  small: {
     fontSize: 12,
     color: "#6b7280",
+    marginTop: 4,
   },
 
-  timeline: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
+  empty: {
+    fontSize: 13,
+    color: "#9ca3af",
+    fontStyle: "italic",
   },
 
-  timelineItem: {
-    display: "flex",
-    gap: 10,
-    alignItems: "flex-start",
+  card: {
+    padding: 15,
+    border: "1px solid #e5e7eb",
+    borderRadius: 10,
+    background: "white",
   },
 
-  timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: "50%",
-    backgroundColor: "#3b82f6",
-    marginTop: 5,
-  },
-
-  timelineLabel: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-
-  timelineSub: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
+  tag: (riskLevel) => ({
+    marginTop: 6,
+    display: "inline-block",
+    padding: "3px 8px",
+    borderRadius: 6,
+    fontSize: 11,
+    background:
+      riskLevel === "high"
+        ? "#fee2e2"
+        : riskLevel === "medium"
+        ? "#fef3c7"
+        : "#e5e7eb",
+  }),
 };
