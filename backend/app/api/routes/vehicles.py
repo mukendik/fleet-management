@@ -10,7 +10,6 @@ from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services.vehicle_service import get_vehicle_by_id
 
 from app.services.intelligence.maintenance_service import MaintenanceRule
-from app.services.intelligence.engine import build_vehicle_intelligence
 
 router = APIRouter()
 
@@ -149,7 +148,18 @@ def update_vehicle(
 
     # Intelligence after commit
     try:
-        FleetIntelligenceEngine.analyze_vehicle(db, vehicle)
+        alerts = (
+            db.query(MaintenanceAlert)
+            .filter(
+                MaintenanceAlert.vehicle_id == vehicle.id,
+                MaintenanceAlert.company_id == current_user.company_id,
+                MaintenanceAlert.resolved.is_(False),
+            )
+            .order_by(MaintenanceAlert.id.desc())
+            .all()
+        )
+
+        result = build_vehicle_intelligence(vehicle, alerts)
     except Exception as e:
         print(f"[Intelligence Error] {e}")
 
