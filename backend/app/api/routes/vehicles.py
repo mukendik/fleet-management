@@ -8,13 +8,15 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services.vehicle_service import get_vehicle_by_id
-from app.services.maintenance_service import MaintenanceService
+
+from app.services.intelligence.maintenance_service import MaintenanceRule
+from app.services.intelligence.engine import build_vehicle_intelligence
 
 router = APIRouter()
 
 
 # =========================
-# LIST VEHICLES (FIXED)
+# LIST VEHICLES
 # =========================
 @router.get("")
 def get_vehicles(
@@ -27,15 +29,12 @@ def get_vehicles(
     current_user: User = Depends(get_current_user),
     _role=Depends(require_roles(["admin", "manager"]))
 ):
-    base_query = db.query(Vehicle).filter(
+    query = db.query(Vehicle).filter(
         Vehicle.company_id == current_user.company_id
     )
 
-    # -------------------------
-    # SEARCH FILTER
-    # -------------------------
     if search:
-        base_query = base_query.filter(
+        query = query.filter(
             or_(
                 Vehicle.name.ilike(f"%{search}%"),
                 Vehicle.plate_number.ilike(f"%{search}%"),
@@ -43,31 +42,15 @@ def get_vehicles(
             )
         )
 
-    # -------------------------
-    # STATUS FILTER
-    # -------------------------
     if status:
-        base_query = base_query.filter(Vehicle.status == status)
+        query = query.filter(Vehicle.status == status)
 
-    # -------------------------
-    # BRAND FILTER
-    # -------------------------
     if brand:
-        base_query = base_query.filter(Vehicle.brand == brand)
+        query = query.filter(Vehicle.brand == brand)
 
-    # -------------------------
-    # SAFE COUNT (IMPORTANT FIX)
-    # -------------------------
-    total = db.query(func.count(Vehicle.id)).filter(
-        Vehicle.company_id == current_user.company_id
-    ).scalar()
+    total = query.count()
 
-    # -------------------------
-    # PAGINATION
-    # -------------------------
-    items = base_query.offset(
-        (page - 1) * limit
-    ).limit(limit).all()
+    items = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
         "items": items,
@@ -97,22 +80,8 @@ def create_vehicle(
     if existing:
         raise HTTPException(status_code=400, detail="Plate number already exists")
 
-    vin_number = data.vin_number.strip() if data.vin_number else None
-
     vehicle = Vehicle(
-        name=data.name,
-        plate_number=data.plate_number,
-        brand=data.brand,
-        model=data.model,
-        year=data.year,
-        mileage=data.mileage,
-        fuel_type=data.fuel_type,
-        transmission=data.transmission,
-        vin_number=vin_number,
-        registration_date=data.registration_date,
-        insurance_expiry_date=data.insurance_expiry_date,
-        technical_inspection_expiry_date=data.technical_inspection_expiry_date,
-        status=data.status,
+        **data.model_dump(),
         company_id=current_user.company_id
     )
 
@@ -161,71 +130,30 @@ def update_vehicle(
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    if data.plate_number:
-        existing = db.query(Vehicle).filter(
-            Vehicle.plate_number == data.plate_number,
-            Vehicle.company_id == current_user.company_id,
-            Vehicle.id != vehicle_id
-        ).first()
-
-        if existing:
-            raise HTTPException(status_code=400, detail="Plate number already exists")
-
-        vehicle.plate_number = data.plate_number
-
-    update_fields = [
-        "name",
-        "brand",
-        "model",
-        "year",
-        "mileage",
-        "fuel_type",
-        "transmission",
-        "status",
-        "registration_date",
-        "insurance_expiry_date",
-        "technical_inspection_expiry_date"
-    ]
-
-    for field in update_fields:
-        value = getattr(data, field)
-        if value is not None:
-            setattr(vehicle, field, value)
-
-    if data.vin_number is not None:
-        vin = data.vin_number.strip()
-        vehicle.vin_number = vin if vin else None
-
-    # -------------------------
-    # TRACK OLD MILEAGE
-    # -------------------------
     old_mileage = vehicle.mileage
 
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(vehicle, key, value)
+
     # =========================
-    # MILEAGE HOOK (MAINTENANCE)
+    # MAINTENANCE HOOK SAFE
     # =========================
     if data.mileage is not None and data.mileage != old_mileage:
         try:
-            MaintenanceService.on_mileage_update(db, vehicle)
+            MaintenanceRule.on_mileage_update(db, vehicle)
         except Exception as e:
-            # IMPORTANT: ne pas bloquer update vehicle
-            print(f"[Maintenance Hook Error] {e}")
+            print(f"[Maintenance Error] {e}")
 
-    # -------------------------
-    # DB commit safe
-    # -------------------------
+    db.commit()
+    db.refresh(vehicle)
+
+    # Intelligence after commit
     try:
-        db.commit()
-        db.refresh(vehicle)
-        MaintenanceService.check_vehicle(db, vehicle)
-        return vehicle
-
+        FleetIntelligenceEngine.analyze_vehicle(db, vehicle)
     except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Update failed: {str(e)}"
-        )
+        print(f"[Intelligence Error] {e}")
+
+    return vehicle
 
 
 # =========================

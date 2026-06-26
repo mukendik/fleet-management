@@ -2,26 +2,25 @@
 
 set -e
 
-echo "🛑 Stop containers..."
+echo "🧹 Stopping containers..."
 docker compose down
 
-echo "🚀 Build + start containers..."
-docker compose up --build -d
+echo "🚀 Building containers..."
+docker compose build
 
-echo "🔄 Restart backend..."
-docker compose restart backend
+echo "🔥 Starting services..."
+docker compose up -d
 
-echo "📦 Run migrations (alembic)..."
-docker exec -it fleet_backend alembic revision --autogenerate -m "update"
-docker exec -it fleet_backend alembic upgrade head
+echo "⏳ Waiting for DB..."
+sleep 5
 
-echo "🏢 Cleaning demo data..."
-docker exec -it fleet_postgres psql -U fleet_user -d fleet_db -c "DELETE FROM users;"
-docker exec -it fleet_postgres psql -U fleet_user -d fleet_db -c "DELETE FROM vehicles"
-
+echo "📦 Applying migrations..."
+docker exec fleet_backend alembic upgrade head
 
 echo "🏢 Insert demo data..."
 docker exec -it fleet_postgres psql -U fleet_user -d fleet_db -c "INSERT INTO companies (name) VALUES ('Demo Company');"
 docker exec -it fleet_postgres psql -U fleet_user -d fleet_db -c "INSERT INTO companies (name) VALUES ('Real Company');"
 
-echo "✅ Done"
+echo "✅ Backend running at:"
+echo "   👉 http://localhost:8000"
+echo "   👉 http://localhost:8000/docs"

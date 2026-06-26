@@ -1,54 +1,40 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
-export default function VehicleDetail() {
+import VehicleIntelligenceCard from "../components/vehicle-intelligence/VehicleIntelligenceCard";
+
+export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [vehicle, setVehicle] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchVehicle = async () => {
+    async function loadIntelligence() {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem("token");
-
-        const res = await axios.get(
-          `http://localhost:8000/vehicles/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const res = await api.get(
+          `/maintenance/vehicle/${id}/intelligence`
         );
 
-        setVehicle(res.data);
+        setData(res.data);
       } catch (err) {
-        console.error(err);
-        setError("Failed to load vehicle");
+        console.error("Error loading vehicle intelligence", err);
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchVehicle();
+    loadIntelligence();
   }, [id]);
 
-  if (loading) {
-    return <div style={{ padding: 20 }}>Loading vehicle...</div>;
-  }
+  if (loading) return <div>Loading vehicle...</div>;
+  if (!data) return <div>No data available</div>;
 
-  if (error) {
-    return <div style={{ padding: 20, color: "red" }}>{error}</div>;
-  }
-
-  if (!vehicle) {
-    return <div style={{ padding: 20 }}>Vehicle not found</div>;
-  }
+  const vehicle = data.vehicle;
 
   return (
     <div style={{ padding: 20 }}>
@@ -87,22 +73,17 @@ export default function VehicleDetail() {
         <Card label="Model" value={vehicle.model} />
         <Card label="Year" value={vehicle.year} />
         <Card label="Mileage" value={`${vehicle.mileage || 0} km`} />
-        <Card label="Fuel" value={vehicle.fuel_type} />
+        <Card label="Fuel" value={vehicle.fuel_type || "-"} />
         <Card label="Status" value={vehicle.status} />
         <Card label="VIN" value={vehicle.vin_number || "-"} />
-        <Card label="Transmission" value={vehicle.transmission} />
+        <Card label="Transmission" value={vehicle.transmission || "-"} />
       </div>
 
-      {/* FUTURE SECTIONS */}
+      {/* INTELLIGENCE */}
       <div style={{ marginTop: 40 }}>
-        <h3>📊 Intelligence (soon)</h3>
-        <p>Risk score, predictions, maintenance suggestions...</p>
+        <VehicleIntelligenceCard data={data} />
       </div>
 
-      <div style={{ marginTop: 20 }}>
-        <h3>🛠 Maintenance (soon)</h3>
-        <p>Alerts, history, upcoming services...</p>
-      </div>
     </div>
   );
 }

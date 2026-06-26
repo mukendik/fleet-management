@@ -16,10 +16,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleet_user -d fleet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     container_name: fleet_backend
-
     restart: always
 
     ports:
@@ -28,11 +33,18 @@ services:
     volumes:
       - ./backend:/app
 
-    depends_on:
-      - db
-
     env_file:
       - ./backend/.env
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
 
 volumes:
   postgres_data:
