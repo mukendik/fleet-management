@@ -84,11 +84,20 @@ export default function DriverPage() {
 
   const handleDelete = async (id) => {
     try {
+      console.log("API DELETE CALL:", id);
+
+      if (!id) {
+        console.error("Missing driver id");
+        return;
+      }
       await driverService.delete(id);
+
       toast("Driver deleted", "success");
+
       fetchDrivers();
-    } catch (err) {
-      toast(getApiErrorMessage(err), "error");
+    } catch (e) {
+      console.error("DELETE ERROR:", e);
+      toast("Delete failed", "error");
     }
   };
 

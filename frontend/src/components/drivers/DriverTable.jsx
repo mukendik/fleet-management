@@ -1,19 +1,63 @@
-export default function DriverTable({ drivers, onEdit, onDelete }) {
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import DriverActionMenu from "./DriverActionMenu";
+import ConfirmModal from "../common/ConfirmModal";
+
+export default function DriverTable({
+  drivers,
+  onEdit,
+  onDelete,
+}) {
+  const navigate = useNavigate();
+
+  // ======================
+  // STATE SAFE DELETE FLOW
+  // ======================
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [driverToDelete, setDriverToDelete] = useState(null);
+
+  // OPEN MODAL (SAFE: store full object)
+  const openDeleteModal = (driver) => {
+    if (!driver?.id) {
+      console.error("Driver missing id", driver);
+      return;
+    }
+
+    setDriverToDelete(driver);
+    setConfirmOpen(true);
+  };
+
+  // CONFIRM DELETE (SAFE EXECUTION)
+  const handleConfirmDelete = async () => {
+    if (!driverToDelete?.id) {
+      console.error("No driver selected for deletion");
+      return;
+    }
+
+    try {
+      console.log("Deleting driver:", driverToDelete.id);
+
+      await onDelete(driverToDelete.id);
+      console.log("onDelete function:", onDelete);
+      // cleanup
+      setConfirmOpen(false);
+      setDriverToDelete(null);
+    } catch (err) {
+      console.error("DELETE ERROR:", err);
+    }
+  };
+
   const containerStyle = {
     marginTop: "20px",
     background: "#ffffff",
     borderRadius: "14px",
-    overflow: "hidden",
+    overflow: "visible",
     boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
   };
 
   const tableStyle = {
     width: "100%",
     borderCollapse: "collapse",
-  };
-
-  const headerRowStyle = {
-    background: "#f8fafc",
   };
 
   const thStyle = {
@@ -30,31 +74,6 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
     fontSize: "14px",
     color: "#111827",
     borderBottom: "1px solid #f1f5f9",
-  };
-
-  const actionsStyle = {
-    display: "flex",
-    gap: "8px",
-  };
-
-  const editBtn = {
-    padding: "6px 10px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#2563eb",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "12px",
-  };
-
-  const deleteBtn = {
-    padding: "6px 10px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#dc2626",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "12px",
   };
 
   const badge = (value) => {
@@ -78,7 +97,7 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
     <div style={containerStyle}>
       <table style={tableStyle}>
         <thead>
-          <tr style={headerRowStyle}>
+          <tr>
             <th style={thStyle}>ID</th>
             <th style={thStyle}>First Name</th>
             <th style={thStyle}>Last Name</th>
@@ -94,15 +113,10 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
           {drivers?.map((d) => (
             <tr key={d.id}>
               <td style={tdStyle}>{d.id}</td>
-
               <td style={tdStyle}>{d.first_name}</td>
-
               <td style={tdStyle}>{d.last_name}</td>
-
               <td style={tdStyle}>{d.email || "-"}</td>
-
               <td style={tdStyle}>{d.phone || "-"}</td>
-
               <td style={tdStyle}>{d.license_number}</td>
 
               <td style={tdStyle}>
@@ -111,27 +125,42 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
                 </span>
               </td>
 
+              {/* ======================
+                  ACTION MENU
+              ====================== */}
               <td style={tdStyle}>
-                <div style={actionsStyle}>
-                  <button
-                    style={editBtn}
-                    onClick={() => onEdit(d)}
-                  >
-                    Edit
-                  </button>
+                <DriverActionMenu
+                  onView={() => navigate(`/drivers/${d.id}`)}
 
-                  <button
-                    style={deleteBtn}
-                    onClick={() => onDelete(d.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                  onEdit={() => onEdit(d)}
+
+                  // IMPORTANT: pass full object (not id)
+                  onDelete={() => openDeleteModal(d)}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* ======================
+          CONFIRM MODAL
+      ====================== */}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Delete driver"
+        message={
+          driverToDelete
+            ? `Delete ${driverToDelete.first_name} ${driverToDelete.last_name} ?`
+            : "Delete this driver ?"
+        }
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDriverToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        confirmText="Delete"
+      />
     </div>
   );
 }

@@ -5,7 +5,9 @@ import Vehicles from "./pages/Vehicles";
 import Dashboard from "./pages/Dashboard";
 import Drivers from "./pages/Drivers"; 
 import VehicleDetail from "./pages/VehicleDetail";
+import DriverDetail from "./pages/DriverDetailPage";
 import AssignmentsPage from "./pages/AssignmentsPage";
+
 
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 import VehicleIntelligencePage from "./pages/VehicleIntelligencePage";
@@ -91,6 +93,16 @@ export default function App() {
             <ProtectedRoute>
               <AppLayout>
                 <VehicleDetail />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/:id"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <DriverDetail />
               </AppLayout>
             </ProtectedRoute>
           }
