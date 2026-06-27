@@ -1,138 +1,161 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import DriverIntelligenceCard from "../components/driver-intelligence/DriverIntelligenceCard";
 
 export default function DriverDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [driver, setDriver] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadDriver() {
+    async function load() {
       try {
         setLoading(true);
-        const res = await api.get(`/drivers/${id}`);
-        setDriver(res.data);
+        setError(null);
+
+        const res = await api.get(`/drivers/${id}/intelligence`);
+        setData(res.data);
+
       } catch (err) {
-        console.error("Error loading driver", err);
+        console.error("Driver intelligence error", err);
+        setError("Failed to load driver intelligence");
       } finally {
         setLoading(false);
       }
     }
 
-    loadDriver();
+    load();
   }, [id]);
 
   if (loading) {
-    return (
-      <div style={pageStyle}>
-        Loading driver...
-      </div>
-    );
+    return <div style={container}>Loading intelligence...</div>;
   }
 
-  if (!driver) {
-    return (
-      <div style={pageStyle}>
-        No driver found
-      </div>
-    );
+  if (error) {
+    return <div style={containerError}>{error}</div>;
   }
+
+  if (!data) {
+    return <div style={container}>No driver intelligence found</div>;
+  }
+
+  const { driver, score, assignments, metrics } = data;
 
   return (
-    <div style={pageStyle}>
+    <div style={container}>
 
-      {/* CONTENT CONTAINER */}
-      <div style={containerStyle}>
+      {/* HEADER */}
+      <div style={header}>
+        <h2 style={{ margin: 0 }}>
+          🧠 {driver?.first_name} {driver?.last_name}
+        </h2>
 
-        {/* HEADER */}
-        <div style={headerStyle}>
-          <h2 style={{ margin: 0 }}>
-            👨‍✈️ {driver.first_name} {driver.last_name}
-          </h2>
-
-          <button
-            onClick={() => navigate("/drivers")}
-            style={backBtn}
-          >
-            ← Back
-          </button>
-        </div>
-
-        {/* GRID */}
-        <div style={gridStyle}>
-          <Card label="First Name" value={driver.first_name} />
-          <Card label="Last Name" value={driver.last_name} />
-          <Card label="Email" value={driver.email || "-"} />
-          <Card label="Phone" value={driver.phone || "-"} />
-          <Card label="License" value={driver.license_number} />
-          <Card label="Status" value={driver.status} />
-        </div>
-
-        {/* FUTURE SECTION */}
-        <div style={{ marginTop: 40 }}>
-          <h3>Activity (coming soon)</h3>
-        </div>
-
+        <button onClick={() => navigate("/drivers")} style={btn}>
+          ← Back
+        </button>
       </div>
+
+      {/* METRICS */}
+      <div style={grid}>
+        <Card label="Assignments" value={metrics?.total_assignments || 0} />
+        <Card label="Email" value={driver?.email || "-"} />
+        <Card label="Phone" value={driver?.phone || "-"} />
+        <Card label="Status" value={driver?.status || "-"} />
+        <Card label="License" value={driver?.license_number || "-"} />
+        <Card label="Driver ID" value={driver?.id || id} />
+      </div>
+
+      {/* DRIVER INTELLIGENCE */}
+      <div style={{ marginTop: 40 }}>
+          <DriverIntelligenceCard driverId={id} />
+      </div>
+
     </div>
   );
 }
 
-/* ================= STYLES ================= */
+/* ================= UI ================= */
 
-const pageStyle = {
-  minHeight: "100vh",
-  width: "100%",
+const container = {
+  padding: 24,
   background: "#f9fafb",
-  padding: "20px",
+  minHeight: "100%",
+  width: "100%",
   boxSizing: "border-box",
 };
 
-const containerStyle = {
-  maxWidth: "1200px",
-  margin: "0 auto",
+const containerError = {
+  ...container,
+  color: "#dc2626",
 };
 
-const headerStyle = {
+const header = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: "20px",
+  marginBottom: 20,
 };
 
-const backBtn = {
-  padding: "8px 12px",
+const btn = {
+  padding: "8px 14px",
   border: "none",
   background: "#111827",
   color: "white",
-  borderRadius: "8px",
+  borderRadius: 8,
   cursor: "pointer",
 };
 
-const gridStyle = {
+const scoreBox = (score) => ({
+  marginTop: 20,
+  padding: 24,
+  borderRadius: 14,
+  color: "white",
+  background:
+    score > 70
+      ? "#16a34a"
+      : score > 40
+      ? "#f59e0b"
+      : "#dc2626",
+});
+
+const grid = {
   marginTop: 20,
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
   gap: 15,
 };
 
-function Card({ label, value }) {
-  return (
-    <div
-      style={{
-        padding: 15,
-        border: "1px solid #e5e7eb",
-        borderRadius: 10,
-        background: "white",
-      }}
-    >
-      <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: "600", marginTop: 5 }}>
-        {value}
-      </div>
-    </div>
-  );
-}
+const section = {
+  marginTop: 30,
+};
+
+const assignmentCard = {
+  padding: 14,
+  border: "1px solid #e5e7eb",
+  borderRadius: 10,
+  marginTop: 10,
+  background: "white",
+};
+
+const empty = {
+  padding: 12,
+  color: "#6b7280",
+};
+
+const Card = ({ label, value }) => (
+  <div style={card}>
+    <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
+    <div style={{ fontWeight: "bold" }}>{value}</div>
+  </div>
+);
+
+const card = {
+  padding: 12,
+  border: "1px solid #e5e7eb",
+  borderRadius: 10,
+  background: "white",
+};

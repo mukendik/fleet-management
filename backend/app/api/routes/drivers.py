@@ -7,6 +7,7 @@ import time
 from app.api.deps import get_db, get_current_user, require_roles
 from app.models.user import User
 from app.models.driver import Driver
+from app.models.vehicle_assignment import VehicleAssignment as Assignment
 from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse, DriverListResponse
 
 router = APIRouter()
@@ -210,3 +211,36 @@ def delete_driver(
     db.commit()
 
     return {"message": "Driver deleted successfully"}
+
+# ----------------------
+# DELETE INTELLIGENCE
+# -----------------------
+@router.get("/{driver_id}/intelligence")
+def driver_intelligence(driver_id: int, db: Session = Depends(get_db)):
+        driver = db.query(Driver).filter(Driver.id == driver_id).first()
+
+        if not driver:
+            raise HTTPException(status_code=404, detail="Driver not found")
+
+        # Assignations
+        assignments = db.query(Assignment).filter(
+            Assignment.driver_id == driver_id
+        ).all()
+
+        # Basic scoring (v1 simple heuristique)
+        score = 100
+
+        score -= len(assignments) * 2  # activité élevée = léger risque
+        score = max(0, min(100, score))
+
+        return {
+            "driver": driver,
+            "score": {
+                "value": score,
+                "level": "good" if score > 70 else "medium" if score > 40 else "risk"
+            },
+            "assignments": assignments,
+            "metrics": {
+                "total_assignments": len(assignments)
+            }
+        }
