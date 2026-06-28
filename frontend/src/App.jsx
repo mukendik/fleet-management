@@ -8,6 +8,8 @@ import VehicleDetail from "./pages/VehicleDetail";
 import DriverDetail from "./pages/DriverDetailPage";
 import AssignmentsPage from "./pages/AssignmentsPage";
 
+import DriverPortalPage from "./pages/drivers-portal/DriverPortalPage";
+
 
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 import VehicleIntelligencePage from "./pages/VehicleIntelligencePage";
@@ -103,6 +105,16 @@ export default function App() {
             <ProtectedRoute>
               <AppLayout>
                 <DriverDetail />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/driver-portal"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <DriverPortalPage />
               </AppLayout>
             </ProtectedRoute>
           }

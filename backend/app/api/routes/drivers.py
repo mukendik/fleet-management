@@ -244,3 +244,30 @@ def driver_intelligence(driver_id: int, db: Session = Depends(get_db)):
                 "total_assignments": len(assignments)
             }
         }
+
+# ----------------------
+# DRIVER PORTAL
+# -----------------------
+@router.post("/{vehicle_id}/mileage")
+def update_mileage(vehicle_id: int, payload: dict, db: Session = Depends(get_db)):
+
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+
+    vehicle.mileage = payload["mileage"]
+
+    db.commit()
+
+    return {"status": "ok"}
+
+@router.post("/{vehicle_id}/maintenance")
+def add_maintenance(vehicle_id: int, payload: dict, db: Session = Depends(get_db)):
+
+    log = MaintenanceLog(
+        vehicle_id=vehicle_id,
+        note=payload["note"]
+    )
+
+    db.add(log)
+    db.commit()
+
+    return {"status": "ok"}
