@@ -3,13 +3,12 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Vehicles from "./pages/Vehicles";
 import Dashboard from "./pages/Dashboard";
-import Drivers from "./pages/Drivers"; 
+import Drivers from "./pages/Drivers";
 import VehicleDetail from "./pages/VehicleDetail";
 import DriverDetail from "./pages/DriverDetailPage";
 import AssignmentsPage from "./pages/AssignmentsPage";
 
 import DriverPortalPage from "./pages/drivers-portal/DriverPortalPage";
-
 
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 import VehicleIntelligencePage from "./pages/VehicleIntelligencePage";
@@ -24,12 +23,14 @@ export default function App() {
     <ToastProvider>
       <Routes>
 
+        {/* PUBLIC */}
         <Route path="/login" element={<Login />} />
 
+        {/* DASHBOARD */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
               <AppLayout>
                 <Dashboard />
               </AppLayout>
@@ -37,10 +38,11 @@ export default function App() {
           }
         />
 
+        {/* VEHICLES */}
         <Route
           path="/vehicles"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
               <AppLayout>
                 <Vehicles />
               </AppLayout>
@@ -49,29 +51,55 @@ export default function App() {
         />
 
         <Route
-          path="/drivers"
+          path="/vehicles/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
               <AppLayout>
-                <Drivers />
+                <VehicleDetail />
               </AppLayout>
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/vehicles/:id/assignments"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
               <AppLayout>
                 <AssignmentsPage />
               </AppLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* DRIVERS */}
+        <Route
+          path="/drivers"
+          element={
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
+              <AppLayout>
+                <Drivers />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/drivers/:id"
+          element={
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
+              <AppLayout>
+                <DriverDetail />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* MAINTENANCE */}
         <Route
           path="/maintenance"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER", "MECHANIC"]}>
               <AppLayout>
                 <MaintenanceDashboard />
               </AppLayout>
@@ -79,47 +107,33 @@ export default function App() {
           }
         />
 
+        {/* INTELLIGENCE */}
         <Route
           path="/intelligence/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
               <AppLayout>
                 <VehicleIntelligencePage />
               </AppLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* DRIVER PORTAL */}
         <Route
-          path="/vehicles/:id"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <VehicleDetail />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/drivers/:id"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <DriverDetail />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-         <Route
           path="/driver-portal"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["ADMIN", "DRIVER"]}>
               <AppLayout>
                 <DriverPortalPage />
               </AppLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* FALLBACK */}
         <Route path="*" element={<Login />} />
+
       </Routes>
     </ToastProvider>
   );

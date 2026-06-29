@@ -1,145 +1,105 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const Login = () => {
+export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    try {
-      setError("");
-      setLoading(true);
+const handleLogin = async () => {
+  try {
+    setError("");
+    setLoading(true);
 
-      const res = await axios.post("http://localhost:8000/auth/login", {
-        email,
-        password,
-      });
+    const user = await login(email, password);
 
-      localStorage.setItem("token", res.data.access_token);
-      navigate("/vehicles");
+    console.log("LOGIN USER:", user);
 
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setError("Email ou mot de passe incorrect");
-      } else {
-        setError("Erreur serveur. Veuillez réessayer.");
-      }
-    } finally {
-      setLoading(false);
+    switch (user.role.toLowerCase()) {
+      case "admin":
+        navigate("/dashboard");
+        break;
+
+      case "driver":
+        navigate("/driver-portal");
+        break;
+
+      default:
+        navigate("/dashboard");
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+    setError("Erreur login");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(135deg, #0f172a, #1e293b)",
-        fontFamily: "Arial",
-      }}
-    >
-      <div
-        style={{
-          width: "380px",
-          background: "white",
-          padding: "30px",
-          borderRadius: "12px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-        }}
-      >
-        {/* HEADER */}
-        <h2 style={{ marginBottom: "5px" }}>🚗 Fleet Manager</h2>
-        <p style={{ marginTop: 0, color: "#6b7280" }}>
-          Sign in to your account
-        </p>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2>🚗 Fleet Manager</h2>
 
-        {/* EMAIL */}
         <input
           placeholder="Email"
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setError("");
-          }}
-          style={inputStyle}
+          onChange={(e) => setEmail(e.target.value)}
+          style={styles.input}
         />
 
-        {/* PASSWORD */}
         <input
           placeholder="Password"
           type="password"
           value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setError("");
-          }}
-          style={inputStyle}
+          onChange={(e) => setPassword(e.target.value)}
+          style={styles.input}
         />
 
-        {/* ERROR */}
-        {error && (
-          <div
-            style={{
-              background: "#fee2e2",
-              color: "#991b1b",
-              padding: "10px",
-              borderRadius: "8px",
-              marginBottom: "10px",
-              fontSize: "14px",
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {/* BUTTON */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: loading ? "#93c5fd" : "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "600",
-          }}
-        >
-          {loading ? "Connexion..." : "Login"}
+        <button onClick={handleLogin} disabled={loading} style={styles.button}>
+          {loading ? "Login..." : "Login"}
         </button>
-
-        {/* FOOTER */}
-        <p
-          style={{
-            marginTop: "15px",
-            fontSize: "12px",
-            color: "#9ca3af",
-            textAlign: "center",
-          }}
-        >
-          Fleet Manager SaaS • MVP v1
-        </p>
       </div>
     </div>
   );
-};
+}
 
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginBottom: "12px",
-  borderRadius: "8px",
-  border: "1px solid #e5e7eb",
-  outline: "none",
+const styles = {
+  container: {
+    height: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#0f172a",
+  },
+  card: {
+    width: 350,
+    padding: 25,
+    borderRadius: 12,
+    background: "white",
+  },
+  input: {
+    width: "100%",
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+  },
+  button: {
+    width: "100%",
+    marginTop: 15,
+    padding: 10,
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+  },
 };
-
-export default Login;
