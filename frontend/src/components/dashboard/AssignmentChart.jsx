@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
+import api from "../../services/api";
 
 export default function AssignmentChart() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    // mock pour MVP (on branchera API après)
-    setData([
-      { day: "Mon", value: 3 },
-      { day: "Tue", value: 5 },
-      { day: "Wed", value: 2 },
-      { day: "Thu", value: 6 },
-      { day: "Fri", value: 4 },
-      { day: "Sat", value: 7 },
-      { day: "Sun", value: 3 },
-    ]);
+    const load = async () => {
+      try {
+        const res = await api.get("/stats/weekly");
+        setData(res.data);
+      } catch (err) {
+        console.error("Weekly stats error:", err);
+      }
+    };
+
+    load();
   }, []);
 
   return (
@@ -26,9 +27,19 @@ export default function AssignmentChart() {
             <div
               style={{
                 ...styles.bar,
-                height: d.value * 10,
+                height: Math.max(d.value * 12, 6),
+
+                background:
+                  d.value > 5
+                    ? "#16a34a"
+                    : d.value > 2
+                    ? "#2563eb"
+                    : "#cbd5e1",
               }}
             />
+
+            <span style={styles.value}>{d.value}</span>
+
             <span style={styles.label}>{d.day}</span>
           </div>
         ))}
@@ -42,29 +53,42 @@ const styles = {
     background: "white",
     padding: 15,
     borderRadius: 12,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
   },
+
   chart: {
     display: "flex",
     alignItems: "flex-end",
     gap: 10,
-    height: 150,
+    height: 180,
     marginTop: 20,
   },
+
   barContainer: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     flex: 1,
   },
+
   bar: {
-    width: 20,
-    background: "#3b82f6",
-    borderRadius: 4,
-    transition: "0.3s",
+    width: 24,
+    borderRadius: 6,
+    transition: "height .4s ease",
+    transform:"scaleY(1.03)",
+    cursor: "pointer",
   },
+
+  value: {
+    fontSize: 12,
+    marginBottom: 6,
+    color: "#374151",
+    fontWeight: "bold",
+  },
+
   label: {
     fontSize: 12,
-    marginTop: 5,
+    marginTop: 6,
     color: "#6b7280",
   },
 };

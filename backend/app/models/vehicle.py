@@ -7,7 +7,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
 )
-from sqlalchemy import func
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 

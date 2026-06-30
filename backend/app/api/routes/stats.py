@@ -99,3 +99,48 @@ def dashboard(
             "weekly": weekly_assignments
         }
     }
+
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
+...
+
+@router.get("/weekly")
+def weekly_assignments(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    company_id = current_user.company_id
+
+    start = datetime.utcnow() - timedelta(days=6)
+
+    assignments = (
+        db.query(
+            func.date(VehicleAssignment.assigned_at),
+            func.count(VehicleAssignment.id)
+        )
+        .filter(
+            VehicleAssignment.company_id == company_id,
+            VehicleAssignment.assigned_at >= start
+        )
+        .group_by(func.date(VehicleAssignment.assigned_at))
+        .all()
+    )
+
+    result = {}
+
+    for d, count in assignments:
+        result[str(d)] = count
+
+    data = []
+
+    for i in range(7):
+        day = start + timedelta(days=i)
+
+        data.append({
+            "day": day.strftime("%a"),
+            "value": result.get(day.strftime("%Y-%m-%d"), 0)
+        })
+
+    return data

@@ -1,55 +1,29 @@
-import { useEffect, useState } from "react";
-import statsService from "../services/statsService";
-
 import KpiCard from "../components/dashboard/KpiCard";
 import AssignmentChart from "../components/dashboard/AssignmentChart";
 import ActivityFeed from "../components/dashboard/ActivityFeed";
 
 export default function Dashboard() {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    load();
-
-    const interval = setInterval(load, 30000); // live refresh
-    return () => clearInterval(interval);
-  }, []);
-
-  const load = async () => {
-    try {
-      const res = await statsService.getDashboard();
-      setData(res.data);
-    } catch (err) {
-      console.error("Dashboard error:", err);
-    }
-  };
-
-  if (!data) return <p>Loading dashboard...</p>;
-
-
   return (
     <div style={styles.container}>
-
+      
       {/* HEADER */}
-      <div style={styles.header}>
+      <div style={{ marginBottom: 20 }}>
         <h1>Fleet Dashboard</h1>
-        <p>Live overview of your operations</p>
+        <p style={{ color: "#6b7280" }}>
+          Live overview of your operations
+        </p>
       </div>
 
-      {/* KPI ROW */}
+      {/* KPI GRID */}
       <div style={styles.kpiGrid}>
-        <KpiCard title="Vehicles" value={data.vehicles.total} sub={`${data.vehicles.free} free`} />
-        <KpiCard
-          title="Drivers"
-          value={data.drivers.total}
-          sub={`${data.drivers.active} active • ${data.drivers.assigned} assigned`}
-        />
-        <KpiCard title="Today Assignments" value={data.assignments.today} />
-        <KpiCard title="Weekly Activity" value={data.assignments.weekly} />
+        <KpiCard title="Vehicles" value={22} sub="20 available" icon="🚗" />
+        <KpiCard title="Drivers" value={6} sub="4 available" icon="👨‍✈" />
+        <KpiCard title="Assigned" value={18} icon="📊" />
+        <KpiCard title="Free" value={4} icon="🟢" />
       </div>
 
-      {/* CHART + FEED */}
-      <div style={styles.grid2}>
+      {/* MIDDLE SECTION */}
+      <div style={styles.middle}>
         <AssignmentChart />
         <ActivityFeed />
       </div>
@@ -61,20 +35,18 @@ export default function Dashboard() {
 const styles = {
   container: {
     padding: 20,
-    background: "#f6f7fb",
+    background: "#f9fafb",
     minHeight: "100vh",
-    fontFamily: "Inter, sans-serif",
   },
-  header: {
-    marginBottom: 20,
-  },
+
   kpiGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     gap: 15,
     marginBottom: 20,
   },
-  grid2: {
+
+  middle: {
     display: "grid",
     gridTemplateColumns: "2fr 1fr",
     gap: 15,
