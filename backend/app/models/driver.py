@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
@@ -18,3 +19,13 @@ class Driver(Base):
     status = Column(String, default="active")  # active / inactive / suspended
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+assignments = relationship(
+    "VehicleAssignment",
+    back_populates="driver"
+)
+assignments = relationship(
+    "VehicleAssignment",
+    back_populates="driver",
+    cascade="all, delete-orphan"
+)

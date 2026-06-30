@@ -26,6 +26,15 @@ class VehicleAssignment(Base):
             Index("ix_va_vehicle_date", "vehicle_id", "assigned_at"),
         )
 
+driver = relationship(
+    "Driver",
+    back_populates="assignments"
+)
+
+vehicle = relationship(
+    "Vehicle",
+    back_populates="assignments"
+)
 
 # =========================
 # INDEX (PERF SaaS)

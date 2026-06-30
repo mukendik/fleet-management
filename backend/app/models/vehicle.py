@@ -8,6 +8,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy import func
+from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
@@ -61,3 +62,8 @@ class Vehicle(Base):
     __table_args__ = (
         Index("ix_vehicle_company_plate", "company_id", "plate_number"),
     )
+
+assignments = relationship(
+    "VehicleAssignment",
+    back_populates="vehicle"
+)
