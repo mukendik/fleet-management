@@ -7,6 +7,7 @@ import Drivers from "./pages/Drivers";
 import VehicleDetail from "./pages/VehicleDetail";
 import DriverDetail from "./pages/DriverDetailPage";
 import AssignmentsPage from "./pages/AssignmentsPage";
+import Assignments from "./pages/Assignments";
 
 import DriverPortalPage from "./pages/drivers-portal/DriverPortalPage";
 
@@ -71,7 +72,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/assignments"
+          element={
+            <ProtectedRoute roles={["ADMIN", "FLEET_MANAGER"]}>
+              <AppLayout>
+                <Assignments />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
         {/* DRIVERS */}
         <Route
           path="/drivers"

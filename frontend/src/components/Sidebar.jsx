@@ -5,14 +5,9 @@ import { navigation } from "../config/navigation";
 export default function Sidebar() {
   const { user, loading } = useAuth();
 
-  console.log("===== SIDEBAR =====");
-  console.log("USER :", user);
-  console.log("LOADING :", loading);
-  console.log("ROLE :", user?.role);
+  const role = user?.role?.toUpperCase?.() || "";
 
-  // =========================
   // LOADING STATE
-  // =========================
   if (loading) {
     return (
       <div style={styles.sidebar}>
@@ -22,68 +17,54 @@ export default function Sidebar() {
     );
   }
 
-  // =========================
-  // SAFE ROLE HANDLING
-  // =========================
-  const role = user?.role?.toUpperCase?.() || "";
-
-  console.log("SAFE ROLE :", role);
-
-  // =========================
   // FILTER MENU SAFE
-  // =========================
   const menu = navigation.filter((item) => {
     const allowed = item.roles?.map((r) => r.toUpperCase()) || [];
     return allowed.includes(role);
   });
 
-  console.log("MENU FINAL :", menu);
-
   return (
     <div style={styles.sidebar}>
-      {/* HEADER */}
+      {/* LOGO */}
       <div style={styles.logo}>
-        🚗 Fleet Manager
+        🚗 Fleet SaaS
       </div>
 
       {/* MENU */}
       <div style={styles.menu}>
-        {menu.length === 0 && (
+        {menu.length === 0 ? (
           <div style={styles.empty}>
-            No menu available for role: {role}
+            No access for role: {role}
           </div>
+        ) : (
+          menu.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              style={({ isActive }) => ({
+                ...styles.link,
+                background: isActive ? "#2563eb" : "transparent",
+                color: isActive ? "white" : "#111827",
+              })}
+            >
+              <span style={{ marginRight: 10 }}>{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))
         )}
-
-        {menu.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            style={({ isActive }) => ({
-              ...styles.link,
-              background: isActive ? "#2563eb" : "transparent",
-              color: isActive ? "white" : "#111827",
-            })}
-          >
-            <span style={{ marginRight: 10 }}>{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
       </div>
 
-      {/* FOOTER USER */}
+      {/* FOOTER (LIGHT ONLY) */}
       <div style={styles.footer}>
-        👤 {user?.email || "Guest"} <br />
-        <span style={{ fontSize: 11, color: "#9ca3af" }}>
-          Role: {role || "unknown"}
-        </span>
+        <div>👤 {user?.email}</div>
+        <div style={styles.role}>
+          {role}
+        </div>
       </div>
     </div>
   );
 }
 
-// =========================
-// STYLES
-// =========================
 const styles = {
   sidebar: {
     width: 260,
@@ -120,7 +101,18 @@ const styles = {
   footer: {
     borderTop: "1px solid #e5e7eb",
     paddingTop: 12,
-    fontSize: 13,
+    fontSize: 12,
+    color: "#6b7280",
+  },
+
+  role: {
+    marginTop: 4,
+    fontSize: 11,
+    padding: "2px 6px",
+    display: "inline-block",
+    background: "#f3f4f6",
+    borderRadius: 6,
+    textTransform: "uppercase",
   },
 
   empty: {

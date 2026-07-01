@@ -10,19 +10,18 @@ export default function DriverIntelligenceCard({ driverId }) {
       try {
         setLoading(true);
 
-        const res = await api.get(
-          `/drivers/${driverId}/intelligence`
-        );
+        const res = await api.get(`/drivers/${driverId}/intelligence`);
 
         setData(res.data);
       } catch (err) {
-        console.error(err);
+        console.error("Driver intelligence error:", err);
+        setData(null);
       } finally {
         setLoading(false);
       }
     }
 
-    load();
+    if (driverId) load();
   }, [driverId]);
 
   if (loading) {
@@ -33,7 +32,9 @@ export default function DriverIntelligenceCard({ driverId }) {
     return <div style={emptyStyle}>No intelligence available.</div>;
   }
 
-  const { score, metrics, assignments } = data;
+  const score = data.score || { value: 0, level: "unknown" };
+  const metrics = data.metrics || { total_assignments: 0 };
+  const assignments = data.assignments || [];
 
   const scoreColor =
     score.value >= 70
@@ -52,18 +53,12 @@ export default function DriverIntelligenceCard({ driverId }) {
   return (
     <div style={container}>
 
-      {/* HEADER */}
       <h2 style={{ marginTop: 0 }}>
         🧠 Driver Intelligence
       </h2>
 
-      {/* SCORE CARD */}
-      <div
-        style={{
-          ...scoreBox,
-          background: scoreColor,
-        }}
-      >
+      {/* SCORE */}
+      <div style={{ ...scoreBox, background: scoreColor }}>
         <div style={{ fontSize: 14, opacity: 0.9 }}>
           Driver Score
         </div>
@@ -98,7 +93,7 @@ export default function DriverIntelligenceCard({ driverId }) {
         />
       </div>
 
-      {/* ASSIGNMENTS */}
+      {/* HISTORY */}
       <div style={{ marginTop: 30 }}>
         <h3>🚗 Assignment History</h3>
 
@@ -110,12 +105,12 @@ export default function DriverIntelligenceCard({ driverId }) {
           assignments.map((a) => (
             <div key={a.id} style={assignmentCard}>
               <div style={{ fontWeight: 600 }}>
-            🚗 {a.vehicle?.brand} {a.vehicle?.model}
-            </div>
+                🚗 {a.vehicle?.brand || ""} {a.vehicle?.model || ""}
+              </div>
 
-            <div style={{ fontSize: 12, color: "#6b7280" }}>
-            Plate: {a.vehicle?.plate_number}
-            </div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>
+                Plate: {a.vehicle?.plate_number || "N/A"}
+              </div>
 
               <div style={{ fontSize: 12, color: "#6b7280" }}>
                 Assignment ID: {a.id}

@@ -87,6 +87,34 @@ def unassign_driver(
     return {"message": "Driver unassigned"}
 
 #current driver of a vehicle
+@router.get("/driver/{driver_id}/current")
+def get_current_vehicle(
+    driver_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    result = (
+        db.query(VehicleAssignment)
+        .options(joinedload(VehicleAssignment.vehicle))
+        .filter(
+            VehicleAssignment.driver_id == driver_id,
+            VehicleAssignment.company_id == current_user.company_id,
+            VehicleAssignment.is_active == True
+        )
+        .first()
+    )
+
+    if not result:
+        return {
+            "vehicle": None,
+            "id": None,
+            "assigned_at": None,
+            "driver_id": driver_id
+        }
+
+    return result
+
 @router.get("/vehicle/{vehicle_id}/current")
 def get_current_driver(
     vehicle_id: int,
@@ -140,3 +168,27 @@ def vehicle_history(
         .limit(100)
         .all()
     )
+
+@router.get("")
+def list_assignments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    company_id = current_user.company_id
+
+    assignments = (
+        db.query(VehicleAssignment)
+        .options(
+            joinedload(VehicleAssignment.driver),
+            joinedload(VehicleAssignment.vehicle)
+        )
+        .filter(
+            VehicleAssignment.company_id == company_id
+        )
+        .order_by(VehicleAssignment.assigned_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    return assignments

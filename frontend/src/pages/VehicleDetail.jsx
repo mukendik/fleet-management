@@ -9,26 +9,29 @@ export default function VehicleDetailPage() {
   const navigate = useNavigate();
 
   const [data, setData] = useState(null);
+  const [current, setCurrent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadIntelligence() {
+    async function load() {
       try {
         setLoading(true);
 
-        const res = await api.get(
-          `/maintenance/vehicle/${id}/intelligence`
-        );
+        const [vehicleRes, currentRes] = await Promise.all([
+          api.get(`/maintenance/vehicle/${id}/intelligence`),
+          api.get(`/assignments/vehicle/${id}/current`),
+        ]);
 
-        setData(res.data);
+        setData(vehicleRes.data);
+        setCurrent(currentRes.data);
       } catch (err) {
-        console.error("Error loading vehicle intelligence", err);
+        console.error("Error loading vehicle detail", err);
       } finally {
         setLoading(false);
       }
     }
 
-    loadIntelligence();
+    load();
   }, [id]);
 
   if (loading) return <div>Loading vehicle...</div>;
@@ -37,51 +40,76 @@ export default function VehicleDetailPage() {
   const vehicle = data.vehicle;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={styles.page}>
 
-      {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>
-          🚗 {vehicle.name} ({vehicle.plate_number})
-        </h2>
+      {/* HEADER SaaS */}
+      <div style={styles.header}>
+        <div>
+          <h2>
+            🚗 {vehicle.name}
+          </h2>
 
-        <button
-          onClick={() => navigate("/vehicles")}
-          style={{
-            padding: "8px 12px",
-            border: "none",
-            background: "#111827",
-            color: "white",
-            borderRadius: 8,
-            cursor: "pointer",
-          }}
-        >
-          Back
-        </button>
+          <div style={styles.sub}>
+            {vehicle.plate_number}
+          </div>
+        </div>
+
+        <div style={styles.actions}>
+          <span
+            style={{
+              ...styles.badge,
+              background:
+                vehicle.status === "active" ? "#16a34a" : "#f59e0b",
+            }}
+          >
+            {vehicle.status?.toUpperCase()}
+          </span>
+
+          <button onClick={() => navigate("/vehicles")} style={styles.btn}>
+            Back
+          </button>
+        </div>
       </div>
 
-      {/* INFO GRID */}
-      <div
-        style={{
-          marginTop: 20,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 15,
-        }}
-      >
+      {/* KPI GRID */}
+      <div style={styles.grid}>
         <Card label="Brand" value={vehicle.brand} />
         <Card label="Model" value={vehicle.model} />
         <Card label="Year" value={vehicle.year} />
         <Card label="Mileage" value={`${vehicle.mileage || 0} km`} />
         <Card label="Fuel" value={vehicle.fuel_type || "-"} />
-        <Card label="Status" value={vehicle.status} />
-        <Card label="VIN" value={vehicle.vin_number || "-"} />
         <Card label="Transmission" value={vehicle.transmission || "-"} />
+        <Card label="VIN" value={vehicle.vin_number || "-"} />
+        <Card label="Company ID" value={vehicle.company_id} />
+      </div>
+
+      {/* CURRENT ASSIGNMENT (NEW 🚀) */}
+      <div style={styles.section}>
+        <h3>Current Assignment</h3>
+
+        {current?.driver ? (
+          <div style={styles.assignmentCard}>
+            <div>
+              <strong>
+                {current.driver.first_name} {current.driver.last_name}
+              </strong>
+
+              <div style={styles.muted}>
+                {current.driver.email}
+              </div>
+            </div>
+
+            <span style={styles.activeBadge}>ACTIVE</span>
+          </div>
+        ) : (
+          <div style={styles.empty}>
+            No driver assigned
+          </div>
+        )}
       </div>
 
       {/* INTELLIGENCE */}
-      <div style={{ marginTop: 40 }}>
-     
+      <div style={{ marginTop: 30 }}>
         <VehicleIntelligenceCard vehicleId={id} />
       </div>
 
@@ -89,20 +117,118 @@ export default function VehicleDetailPage() {
   );
 }
 
+/* =========================
+   CARD COMPONENT
+========================= */
 function Card({ label, value }) {
   return (
-    <div
-      style={{
-        padding: 15,
-        border: "1px solid #e5e7eb",
-        borderRadius: 10,
-        background: "white",
-      }}
-    >
-      <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: "600", marginTop: 5 }}>
-        {value}
-      </div>
+    <div style={styles.card}>
+      <div style={styles.label}>{label}</div>
+      <div style={styles.value}>{value}</div>
     </div>
   );
 }
+
+/* =========================
+   STYLES
+========================= */
+const styles = {
+  page: {
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  sub: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginTop: 4,
+  },
+
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  badge: {
+    padding: "4px 10px",
+    borderRadius: 999,
+    color: "white",
+    fontSize: 12,
+  },
+
+  btn: {
+    padding: "6px 10px",
+    border: "none",
+    background: "#111827",
+    color: "white",
+    borderRadius: 8,
+    cursor: "pointer",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 12,
+  },
+
+  card: {
+    padding: 15,
+    background: "white",
+    borderRadius: 10,
+    border: "1px solid #e5e7eb",
+  },
+
+  label: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+
+  value: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 5,
+  },
+
+  section: {
+    background: "white",
+    padding: 15,
+    borderRadius: 12,
+  },
+
+  assignmentCard: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 10,
+    background: "#f3f4f6",
+    borderRadius: 10,
+  },
+
+  activeBadge: {
+    padding: "4px 8px",
+    borderRadius: 999,
+    background: "#16a34a",
+    color: "white",
+    fontSize: 11,
+  },
+
+  muted: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+
+  empty: {
+    padding: 10,
+    background: "#fef3c7",
+    borderRadius: 8,
+  },
+};
